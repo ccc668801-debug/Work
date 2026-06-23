@@ -1,532 +1,1018 @@
 <!DOCTYPE html>
+
 <html lang="zh-TW">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>襪襪</title>
-    <style>
-        /* 日系簡約、馬卡龍圓潤風格 */
-        :root {
-            --bg-color: #f7f9fa;
-            --card-bg: #ffffff;
-            --primary: #ffd43b; /* 暖黃 */
-            --primary-hover: #fcc419;
-            --scan-btn-bg: #e8f5e9; /* 馬卡龍綠 */
-            --scan-btn-border: #a5d6a7;
-            --add-btn-bg: #e3f2fd; /* 馬卡龍藍 */
-            --add-btn-border: #90caf9;
-            --text-main: #495057;
-            --text-sub: #868e96;
-            --border-radius: 24px;
-            --danger: #ff8787;
-            --warning-bg: #fff3cd;
-            --warning-border: #ffeeba;
-            --folder-bg: #fff9db; /* 資料夾暖黃底色 */
-            --folder-border: #ffe066;
-        }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: "Helvetica Neue", Arial, "Noto Sans TC", sans-serif;
-            -webkit-tap-highlight-color: transparent;
-        }
+<meta charset="UTF-8">
 
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-            padding-bottom: 80px;
-        }
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-        header {
-            width: 100%;
-            max-width: 480px;
-            padding: 20px;
-            text-align: center;
-            background: white;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.02);
-            font-size: 1.2rem;
-            font-weight: bold;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 8px;
-        }
+<title>襪襪</title>
 
-        /* 版本更新小標籤 */
-        .version-badge {
-            font-size: 0.75rem;
-            background: #e9ecef;
-            color: var(--text-sub);
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-weight: normal;
-        }
+<style>
 
-        .container {
-            width: 100%;
-            max-width: 480px;
-            padding: 20px;
-        }
+/* 日系簡約、馬卡龍圓潤風格 */
 
-        .tab-content {
-            display: none;
-        }
+:root {
 
-        .tab-content.active {
-            display: block;
-        }
+--bg-color: #f7f9fa;
 
-        /* 核心功能按鈕區 */
-        .zone-selection {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-            margin-top: 10px;
-            margin-bottom: 25px;
-        }
+--card-bg: #ffffff;
 
-        /* 最初版 100% 成功開相機的 label 按鈕機制 */
-        .zone-label-btn {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            border-radius: var(--border-radius);
-            padding: 30px 15px;
-            text-align: center;
-            box-shadow: 0 6px 16px rgba(0,0,0,0.02);
-            cursor: pointer;
-            transition: transform 0.1s ease;
-        }
+--primary: #ffd43b; /* 暖黃 */
 
-        .zone-label-btn:active {
-            transform: scale(0.96);
-        }
+--primary-hover: #fcc419;
 
-        .zone-scan { background: var(--scan-btn-bg); border: 3px dashed var(--scan-btn-border); color: #2e7d32; }
-        .zone-add { background: var(--add-btn-bg); border: 3px dashed var(--add-btn-border); color: #1565c0; }
-        .zone-label-btn span { font-size: 1rem; font-weight: bold; }
+--scan-btn-bg: #e8f5e9; /* 馬卡龍綠 (舊東西辨識) */
 
-        /* 預覽卡片 */
-        .preview-card {
-            background: white;
-            border-radius: var(--border-radius);
-            padding: 20px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.04);
-            width: 100%;
-            display: none;
-            text-align: center;
-        }
+--scan-btn-border: #a5d6a7;
 
-        #preview-img { width: 100%; max-height: 260px; border-radius: 16px; object-fit: cover; }
-        .result-box { margin-top: 15px; padding: 14px; border-radius: 14px; font-weight: bold; font-size: 1.1rem; line-height: 1.5; }
+--add-btn-bg: #e3f2fd; /* 馬卡龍藍 (新東西建立) */
 
-        /* 標籤池 */
-        .tag-container { margin-top: 15px; text-align: left; }
-        .tag-title { font-size: 0.85rem; color: var(--text-sub); margin-bottom: 8px; font-weight: bold; }
-        .tag-pool { display: flex; flex-wrap: wrap; gap: 8px; max-height: 120px; overflow-y: auto; padding: 4px; }
-        .quick-tag { background: #f1f3f5; color: var(--text-main); padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; font-weight: bold; cursor: pointer; border: 1px solid #e9ecef; }
-        .quick-tag:active { background: var(--primary); }
+--add-btn-border: #90caf9;
 
-        .input-group { margin-top: 15px; display: flex; gap: 8px; }
-        input[type="text"] { flex: 1; padding: 12px 18px; border: 2px solid #e9ecef; border-radius: 30px; font-size: 0.95rem; outline: none; }
-        input[type="text"]:focus { border-color: var(--primary); }
-        button { background-color: var(--primary); color: var(--text-main); border: none; padding: 12px 24px; border-radius: 30px; font-weight: bold; cursor: pointer; }
+--text-main: #495057;
 
-        /* ================== 📦 智慧資料夾物品庫樣式 ================== */
-        .search-box { background: white; padding: 14px; border-radius: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.02); margin-bottom: 20px; }
-        
-        .folder-wrapper {
-            background: white;
-            border-radius: var(--border-radius);
-            margin-bottom: 14px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.02);
-            overflow: hidden;
-            border: 1px solid #edf2f7;
-        }
+--text-sub: #868e96;
 
-        .folder-header {
-            background: var(--folder-bg);
-            border-bottom: 2px solid var(--folder-border);
-            padding: 16px 20px;
-            font-weight: bold;
-            font-size: 1rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            cursor: pointer;
-            user-select: none;
-        }
-        
-        .folder-header:active { background: #fff3bf; }
+--border-radius: 24px;
 
-        .folder-content {
-            display: none;
-            padding: 16px;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-            background: #fafbfc;
-        }
+--danger: #ff8787;
 
-        .folder-wrapper.open .folder-content {
-            display: grid;
-        }
+}
 
-        .history-item {
-            background: white;
-            padding: 10px;
-            border-radius: 16px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            position: relative;
-            border: 1px solid #f1f3f5;
-        }
 
-        .history-item img { width: 100%; height: 110px; object-fit: cover; border-radius: 12px; margin-bottom: 6px; }
-        .history-item span { font-size: 0.8rem; color: var(--text-sub); width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-        .delete-btn {
-            position: absolute;
-            top: 6px;
-            right: 6px;
-            width: 22px;
-            height: 22px;
-            background: rgba(255, 255, 255, 0.9);
-            border: 1px solid #ffc9c9;
-            border-radius: 50%;
-            color: var(--danger);
-            font-size: 12px;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-        }
+* {
 
-        .bottom-nav {
-            position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; height: 65px;
-            background: white; box-shadow: 0 -4px 16px rgba(0,0,0,0.04); display: flex; border-top-left-radius: 20px; border-top-right-radius: 20px; overflow: hidden; z-index: 100;
-        }
-        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 0.85rem; font-weight: bold; color: var(--text-sub); cursor: pointer; }
-        .nav-item.active { color: var(--text-main); background: #fffdf2; }
-    </style>
+box-sizing: border-box;
+
+margin: 0;
+
+padding: 0;
+
+font-family: "Helvetica Neue", Arial, "Noto Sans TC", sans-serif;
+
+-webkit-tap-highlight-color: transparent;
+
+}
+
+
+
+body {
+
+background-color: var(--bg-color);
+
+color: var(--text-main);
+
+display: flex;
+
+flex-direction: column;
+
+align-items: center;
+
+min-height: 100vh;
+
+padding-bottom: 80px;
+
+}
+
+
+
+header {
+
+width: 100%;
+
+max-width: 480px;
+
+padding: 20px;
+
+text-align: center;
+
+background: white;
+
+box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+
+font-size: 1.2rem;
+
+font-weight: bold;
+
+}
+
+
+
+.container {
+
+width: 100%;
+
+max-width: 480px;
+
+padding: 20px;
+
+}
+
+
+
+.tab-content {
+
+display: none;
+
+}
+
+
+
+.tab-content.active {
+
+display: block;
+
+}
+
+
+
+/* ================== 分頁一：分區工作板 ================== */
+
+/* 兩大核心功能按鈕區 */
+
+.zone-selection {
+
+display: grid;
+
+grid-template-columns: 1fr 1fr;
+
+gap: 16px;
+
+margin-top: 10px;
+
+margin-bottom: 25px;
+
+}
+
+
+
+.zone-card {
+
+border-radius: var(--border-radius);
+
+padding: 30px 15px;
+
+text-align: center;
+
+cursor: pointer;
+
+transition: all 0.2s ease;
+
+box-shadow: 0 6px 16px rgba(0,0,0,0.02);
+
+display: flex;
+
+flex-direction: column;
+
+align-items: center;
+
+gap: 12px;
+
+}
+
+
+
+.zone-card:active {
+
+transform: scale(0.96);
+
+}
+
+
+
+/* 左區：辨識舊東西 */
+
+.zone-scan {
+
+background: var(--scan-btn-bg);
+
+border: 3px dashed var(--scan-btn-border);
+
+color: #2e7d32;
+
+}
+
+
+
+/* 右區：新增建立記憶 */
+
+.zone-add {
+
+background: var(--add-btn-bg);
+
+border: 3px dashed var(--add-btn-border);
+
+color: #1565c0;
+
+}
+
+
+
+.zone-card span {
+
+font-size: 1rem;
+
+font-weight: bold;
+
+}
+
+
+
+.zone-card p {
+
+font-size: 0.75rem;
+
+opacity: 0.8;
+
+line-height: 1.4;
+
+}
+
+
+
+/* 拍攝後的結果展示卡片 */
+
+.preview-card {
+
+background: white;
+
+border-radius: var(--border-radius);
+
+padding: 20px;
+
+box-shadow: 0 8px 24px rgba(0,0,0,0.04);
+
+width: 100%;
+
+display: none;
+
+text-align: center;
+
+}
+
+
+
+#preview-img {
+
+width: 100%;
+
+max-height: 260px;
+
+border-radius: 16px;
+
+object-fit: cover;
+
+}
+
+
+
+.result-box {
+
+margin-top: 15px;
+
+padding: 14px;
+
+border-radius: 14px;
+
+font-weight: bold;
+
+font-size: 1.1rem;
+
+}
+
+
+
+.input-group {
+
+margin-top: 15px;
+
+display: flex;
+
+gap: 8px;
+
+}
+
+
+
+input[type="text"] {
+
+flex: 1;
+
+padding: 12px 18px;
+
+border: 2px solid #e9ecef;
+
+border-radius: 30px;
+
+font-size: 0.95rem;
+
+outline: none;
+
+}
+
+
+
+input[type="text"]:focus {
+
+border-color: var(--primary);
+
+}
+
+
+
+button {
+
+background-color: var(--primary);
+
+color: var(--text-main);
+
+border: none;
+
+padding: 12px 24px;
+
+border-radius: 30px;
+
+font-weight: bold;
+
+cursor: pointer;
+
+font-size: 0.95rem;
+
+}
+
+
+
+#camera-input { display: none; }
+
+
+
+/* ================== 分頁二：物品庫 ================== */
+
+.search-box {
+
+background: white;
+
+padding: 14px;
+
+border-radius: 20px;
+
+box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+
+margin-bottom: 20px;
+
+}
+
+
+
+.history-list {
+
+display: grid;
+
+grid-template-columns: repeat(2, 1fr);
+
+gap: 12px;
+
+}
+
+
+
+.history-item {
+
+background: white;
+
+padding: 10px;
+
+border-radius: 16px;
+
+box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+
+display: flex;
+
+flex-direction: column;
+
+align-items: center;
+
+text-align: center;
+
+position: relative;
+
+}
+
+
+
+.history-item img {
+
+width: 100%;
+
+height: 120px;
+
+object-fit: cover;
+
+border-radius: 12px;
+
+margin-bottom: 8px;
+
+}
+
+
+
+.history-item span {
+
+font-size: 0.9rem;
+
+font-weight: bold;
+
+color: var(--text-main);
+
+width: 100%;
+
+white-space: nowrap;
+
+overflow: hidden;
+
+text-overflow: ellipsis;
+
+}
+
+
+
+.delete-btn {
+
+position: absolute;
+
+top: 6px;
+
+right: 6px;
+
+width: 24px;
+
+height: 24px;
+
+background: rgba(255, 255, 255, 0.9);
+
+border: 1px solid #ffc9c9;
+
+border-radius: 50%;
+
+color: var(--danger);
+
+font-size: 14px;
+
+font-weight: bold;
+
+display: flex;
+
+align-items: center;
+
+justify-content: center;
+
+cursor: pointer;
+
+box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+
+}
+
+
+
+/* 底部固定導覽列 */
+
+.bottom-nav {
+
+position: fixed;
+
+bottom: 0;
+
+left: 50%;
+
+transform: translateX(-50%);
+
+width: 100%;
+
+max-width: 480px;
+
+height: 65px;
+
+background: white;
+
+box-shadow: 0 -4px 16px rgba(0,0,0,0.04);
+
+display: flex;
+
+border-top-left-radius: 20px;
+
+border-top-right-radius: 20px;
+
+overflow: hidden;
+
+z-index: 100;
+
+}
+
+
+
+.nav-item {
+
+flex: 1;
+
+display: flex;
+
+flex-direction: column;
+
+align-items: center;
+
+justify-content: center;
+
+gap: 4px;
+
+font-size: 0.85rem;
+
+font-weight: bold;
+
+color: var(--text-sub);
+
+cursor: pointer;
+
+}
+
+
+
+.nav-item.active {
+
+color: var(--text-main);
+
+background: #fffdf2;
+
+}
+
+</style>
+
 </head>
+
 <body>
 
-    <header>
-        <span id="page-title">✨ 圖片記憶</span>
-        <span class="version-badge">v1.5</span>
-    </header>
 
-    <div class="container">
-        
-        <div id="tab-scan" class="tab-content active">
-            <div class="zone-selection" id="zone-ui">
-                
-                <label class="zone-label-btn zone-scan">
-                    <input type="file" accept="image/*" capture="environment" style="display: none;" onchange="handlePhotoTrigger(this, 'scan')">
-                    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                    <span>📸 辨識舊東西</span>
-                </label>
-                
-                <label class="zone-label-btn zone-add">
-                    <input type="file" accept="image/*" capture="environment" style="display: none;" onchange="handlePhotoTrigger(this, 'add')">
-                    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                    <span>➕ 記憶新東西</span>
-                </label>
-                
-            </div>
 
-            <div class="preview-card" id="preview-card">
-                <img id="preview-img" src="" alt="當前照片">
-                <div id="result-box" class="result-box"></div>
-                
-                <div id="add-interactive-zone" style="display: none;">
-                    <div class="tag-container">
-                        <div class="tag-title">🏷️ 點擊使用常用名字：</div>
-                        <div class="tag-pool" id="tag-pool"></div>
-                    </div>
+<header id="page-title">✨ 圖片記憶工作板</header>
 
-                    <div class="input-group">
-                        <input type="text" id="item-name" placeholder="請輸入名字或點擊上方標籤...">
-                        <button onclick="saveItem()">記住它</button>
-                    </div>
-                </div>
-                
-                <button style="width:100%; margin-top:16px; background:#f1f3f5; color:var(--text-sub); border:none; padding:12px; border-radius:20px; font-weight:bold; cursor:pointer;" onclick="resetScan()">返回主選單</button>
-            </div>
-        </div>
 
-        <div id="tab-library" class="tab-content">
-            <div class="search-box">
-                <input type="text" id="search-input" placeholder="🔍 輸入名字搜尋資料夾..." oninput="searchItems()">
-            </div>
-            <div id="folder-list-container"></div>
-        </div>
 
-    </div>
+<div class="container">
 
-    <div class="bottom-nav">
-        <div class="nav-item active" id="nav-scan-btn" onclick="switchTab('scan')">照片記憶</div>
-        <div class="nav-item" id="nav-lib-btn" onclick="switchTab('library')">圖片庫</div>
-    </div>
-    <script>
-        let db;
-        let currentMode = ""; 
-        let currentHash = "";
-        let currentBase64 = "";
 
-        const request = indexedDB.open("PikaPerfectDB", 3);
-        request.onupgradeneeded = function(e) {
-            db = e.target.result;
-            if (!db.objectStoreNames.contains("items")) {
-                db.createObjectStore("items", { keyPath: "id", autoIncrement: true });
-            }
-        };
-        request.onsuccess = function(e) {
-            db = e.target.result;
-            loadHistory();
-            updateTagPool();
-        };
+<div id="tab-scan" class="tab-content active">
 
-        // 🌟 回歸最初版核心：點擊後直接讀取原始檔案，完全不經過任何會被瀏覽器阻擋的非同步壓縮程式碼
-        function handlePhotoTrigger(inputEl, mode) {
-            currentMode = mode;
-            const file = inputEl.files[0];
-            if (!file) return;
 
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                currentBase64 = event.target.result;
-                
-                const tempImg = new Image();
-                tempImg.onload = function() {
-                    // 拍照後才在背景默默計算指紋，絕不干擾相機開啟
-                    currentHash = calculateImageHash(tempImg);
-                    
-                    document.getElementById('zone-ui').style.display = 'none';
-                    document.getElementById('preview-card').style.display = 'block';
-                    document.getElementById('preview-img').src = currentBase64;
-                    
-                    if (currentMode === 'scan') {
-                        forceMatchImage(currentHash);
-                    } else if (currentMode === 'add') {
-                        openNewItemForm();
-                    }
-                };
-                tempImg.src = currentBase64;
-            };
-            reader.readAsDataURL(file);
-        }
+<div class="zone-selection" id="zone-ui">
 
-        function forceMatchImage(targetHash) {
-            const transaction = db.transaction(["items"], "readonly");
-            const store = transaction.objectStore("items");
-            const getAll = store.getAll();
+<div class="zone-card zone-scan" onclick="startAction('scan')">
 
-            getAll.onsuccess = function() {
-                const items = getAll.result;
-                const resultBox = document.getElementById('result-box');
-                document.getElementById('add-interactive-zone').style.display = 'none';
+<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
 
-                if (items.length === 0) {
-                    resultBox.style.backgroundColor = '#fff3cd';
-                    resultBox.innerText = `庫存裡目前沒有任何圖片喔！請先點右邊建立記憶。`;
-                    return;
-                }
+<span>📸 辨識舊東西</span>
 
-                let bestMatch = null;
-                let highestScore = -1;
+<p>我確定以前拍過它<br>直接幫我認出來</p>
 
-                items.forEach(item => {
-                    let score = getSimilarity(targetHash, item.hash);
-                    if (score > highestScore) {
-                        highestScore = score;
-                        bestMatch = item;
-                    }
-                });
+</div>
 
-                const finalScore = Math.round(highestScore);
 
-                if (finalScore >= 65) {
-                    resultBox.style.backgroundColor = 'var(--scan-btn-bg)';
-                    resultBox.innerHTML = `🎯 幫你找到了！這應該是：<br><span style="font-size:1.4rem; color:#1b5e20;">【 ${bestMatch.name} 】</span><br><span style="font-size:0.8rem; font-weight:normal; color:var(--text-sub);">相似度：${finalScore}%</span>`;
-                } else {
-                    resultBox.style.backgroundColor = 'var(--warning-bg)';
-                    resultBox.innerHTML = `⚠️ <span style="color:#b78103;">注意：找不到非常像的物品...</span><br>庫存表中目前最接近的是：<span style="color:#b78103;">【 ${bestMatch.name} 】</span><br><span style="font-size:0.8rem; font-weight:normal; color:#b78103;">(相似度僅 ${finalScore}%，這極可能是全新物品，建議點右邊重新建立記憶！)</span>`;
-                }
-            };
-        }
+<div class="zone-card zone-add" onclick="startAction('add')">
 
-        function openNewItemForm() {
-            const resultBox = document.getElementById('result-box');
-            resultBox.style.backgroundColor = 'var(--add-btn-bg)';
-            resultBox.innerText = `➕ 正在為新東西建立記憶：`;
-            document.getElementById('add-interactive-zone').style.display = 'block';
-            document.getElementById('item-name').value = '';
-            updateTagPool();
-        }
+<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
 
-        function updateTagPool() {
-            const pool = document.getElementById('tag-pool');
-            pool.innerHTML = '';
-            db.transaction(["items"], "readonly").objectStore("items").getAll().onsuccess = function(e) {
-                const items = e.target.result;
-                const uniqueNames = [...new Set(items.map(item => item.name))];
-                if(uniqueNames.length === 0) {
-                    pool.innerHTML = `<span style="font-size:0.85rem; color:var(--text-sub);">目前還沒有常用名字，請手動輸入一次。</span>`;
-                    return;
-                }
-                uniqueNames.forEach(name => {
-                    const span = document.createElement('span');
-                    span.className = 'quick-tag';
-                    span.innerText = name;
-                    span.onclick = function() { document.getElementById('item-name').value = name; };
-                    pool.appendChild(span);
-                });
-            };
-        }
+<span>➕ 記憶新東西</span>
 
-        function saveItem() {
-            const name = document.getElementById('item-name').value.trim();
-            if (!name) return;
+<p>這是一個全新物品<br>拍照並幫它取名字</p>
 
-            const transaction = db.transaction(["items"], "readwrite");
-            const store = transaction.objectStore("items");
-            const newItem = { name: name, hash: currentHash, image: currentBase64 };
+</div>
 
-            store.add(newItem).onsuccess = function() {
-                document.getElementById('add-interactive-zone').style.display = 'none';
-                document.getElementById('result-box').innerHTML = `✨ 已將「<span style="color:#0d47a1;">${name}</span>」成功記錄到圖片囉！`;
-                updateTagPool();
-            };
-        }
+</div>
 
-        function resetScan() {
-            document.getElementById('zone-ui').style.display = 'grid';
-            document.getElementById('preview-card').style.display = 'none';
-            document.querySelectorAll('input[type="file"]').forEach(input => input.value = "");
-        }
 
-        // 最初版最穩定的 8x8 指紋運算
-        function calculateImageHash(imgEl) {
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            canvas.width = 8; canvas.height = 8;
-            ctx.drawImage(imgEl, 0, 0, 8, 8);
-            const imgData = ctx.getImageData(0, 0, 8, 8).data;
-            let grayValues = [], sum = 0;
-            for (let i = 0; i < imgData.length; i += 4) {
-                let gray = imgData[i] * 0.299 + imgData[i+1] * 0.587 + imgData[i+2] * 0.114;
-                grayValues.push(gray); sum += gray;
-            }
-            let avg = sum / grayValues.length;
-            let hash = "";
-            for (let i = 0; i < grayValues.length; i++) hash += grayValues[i] >= avg ? "1" : "0";
-            return hash;
-        }
 
-        function getSimilarity(hash1, hash2) {
-            let similarity = 0;
-            for (let i = 0; i < hash1.length; i++) if (hash1[i] === hash2[i]) similarity++;
-            return (similarity / hash1.length) * 100;
-        }
+<div class="preview-card" id="preview-card">
 
-        function switchTab(tabName) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-            if (tabName === 'scan') {
-                document.getElementById('tab-scan').classList.add('active');
-                document.getElementById('nav-scan-btn').classList.add('active');
-                document.getElementById('page-title').innerText = "✨ 圖片記憶";
-                resetScan();
-            } else {
-                document.getElementById('tab-library').classList.add('active');
-                document.getElementById('nav-lib-btn').classList.add('active');
-                document.getElementById('page-title').innerText = "📦圖片庫";
-                loadHistory();
-            }
-        }
+<img id="preview-img" src="" alt="當前照片">
 
-        function loadHistory() { renderFolders(null); }
-        function searchItems() { const keyword = document.getElementById('search-input').value.trim().toLowerCase(); renderFolders(keyword === "" ? null : keyword); }
-        
-        function deleteItem(id, name) {
-            if (confirm(`確定要刪除這張照片嗎？`)) {
-                db.transaction(["items"], "readwrite").objectStore("items").delete(id).onsuccess = function() { 
-                    searchItems(); 
-                    updateTagPool();
-                };
-            }
-        }
 
-        function toggleFolder(el) {
-            el.parentElement.classList.toggle('open');
-        }
+<div id="result-box" class="result-box"></div>
 
-        function renderFolders(filterKeyword) {
-            const container = document.getElementById('folder-list-container');
-            container.innerHTML = '';
 
-            db.transaction(["items"], "readonly").objectStore("items").getAll().onsuccess = function(e) {
-                const items = e.target.result;
-                const groups = {};
-                
-                items.forEach(item => {
-                    if (filterKeyword && !item.name.toLowerCase().includes(filterKeyword)) return;
-                    if (!groups[item.name]) {
-                        groups[item.name] = [];
-                    }
-                    groups[item.name].push(item);
-                });
+<div class="input-group" id="save-group" style="display: none;">
 
-                const groupNames = Object.keys(groups).reverse();
+<input type="text" id="item-name" placeholder="請輸入新東西的名字...">
 
-                if(groupNames.length === 0) {
-                    container.innerHTML = `<div style="text-align:center; color:var(--text-sub); margin-top:40px; font-size:0.95rem;">沒有找到相符的資料夾喔！</div>`;
-                    return;
-                }
+<button onclick="saveItem()">記住它</button>
 
-                groupNames.forEach(name => {
-                    const groupItems = groups[name].reverse();
-                    const wrapper = document.createElement('div');
-                    wrapper.className = 'folder-wrapper';
-                    
-                    const header = document.createElement('div');
-                    header.className = 'folder-header';
-                    header.onclick = function() { toggleFolder(this); };
-                    header.innerHTML = `<span>📁 ${name}</span> <span style="font-size:0.85rem; color:var(--text-sub); background:rgba(0,0,0,0.04); padding:2px 10px; border-radius:12px;">共 ${groupItems.length} 張</span>`;
-                    
-                    const content = document.createElement('div');
-                    content.className = 'folder-content';
-                    
-                    groupItems.forEach(item => {
-                        const itemDiv = document.createElement('div');
-                        itemDiv.className = 'history-item';
-                        itemDiv.innerHTML = `
-                            <div class="delete-btn" onclick="event.stopPropagation(); deleteItem(${item.id}, '${item.name}')">✕</div>
-                            <img src="${item.image}">
-                            <span>ID: #${item.id}</span>
-                        `;
-                        content.appendChild(itemDiv);
-                    });
+</div>
 
-                    wrapper.appendChild(header);
-                    wrapper.appendChild(content);
-                    container.appendChild(wrapper);
-                });
-            };
-        }
-    </script>
+
+<button style="width:100%; margin-top:12px; background:#f1f3f5; color:var(--text-sub); border:none; padding:10px; border-radius:20px; font-weight:bold; cursor:pointer;" onclick="resetScan()">返回主選單</button>
+
+</div>
+
+
+
+<input type="file" id="camera-input" accept="image/*" capture="environment">
+
+</div>
+
+
+
+<div id="tab-library" class="tab-content">
+
+<div class="search-box">
+
+<input type="text" id="search-input" placeholder="🔍 輸入名字搜尋你拍過的舊照片..." oninput="searchItems()">
+
+</div>
+
+<div class="history-list" id="history-list"></div>
+
+</div>
+
+
+
+</div>
+
+
+
+<div class="bottom-nav">
+
+<div class="nav-item active" id="nav-scan-btn" onclick="switchTab('scan')">工作板</div>
+
+<div class="nav-item" id="nav-lib-btn" onclick="switchTab('library')">我的物品庫</div>
+
+</div>
+
+
+
+<script>
+
+let db;
+
+let currentMode = ""; // "scan" 代表確認舊東西，"add" 代表新增新東西
+
+let currentHash = "";
+
+let currentBase64 = "";
+
+
+
+const request = indexedDB.open("PikaZonesDB", 1);
+
+request.onupgradeneeded = function(e) {
+
+db = e.target.result;
+
+if (!db.objectStoreNames.contains("items")) {
+
+db.createObjectStore("items", { keyPath: "id", autoIncrement: true });
+
+}
+
+};
+
+request.onsuccess = function(e) {
+
+db = e.target.result;
+
+loadHistory();
+
+};
+
+
+
+// 點擊區域觸發相機，並標記當前模式
+
+function startAction(mode) {
+
+currentMode = mode;
+
+document.getElementById('camera-input').click();
+
+}
+
+
+
+// 處理照片載入
+
+document.getElementById('camera-input').addEventListener('change', function(e) {
+
+const file = e.target.files[0];
+
+if (!file) return;
+
+
+
+const reader = new FileReader();
+
+reader.onload = function(event) {
+
+currentBase64 = event.target.result;
+
+
+document.getElementById('zone-ui').style.display = 'none';
+
+document.getElementById('preview-card').style.display = 'block';
+
+
+const img = document.getElementById('preview-img');
+
+img.src = currentBase64;
+
+
+img.onload = function() {
+
+currentHash = calculateImageHash(img);
+
+
+if (currentMode === 'scan') {
+
+// 模式一：強迫比對出庫存內最像的舊東西
+
+forceMatchImage(currentHash);
+
+} else {
+
+// 模式二：直接進入命名儲存流程
+
+openNewItemForm();
+
+}
+
+};
+
+};
+
+reader.readAsDataURL(file);
+
+});
+
+
+
+// 模式一核心：不管相似度多少，直接抓出最接近的舊物品
+
+function forceMatchImage(targetHash) {
+
+const transaction = db.transaction(["items"], "readonly");
+
+const store = transaction.objectStore("items");
+
+const getAll = store.getAll();
+
+
+
+getAll.onsuccess = function() {
+
+const items = getAll.result;
+
+const resultBox = document.getElementById('result-box');
+
+const saveGroup = document.getElementById('save-group');
+
+
+saveGroup.style.display = 'none';
+
+
+
+if (items.length === 0) {
+
+resultBox.style.backgroundColor = '#fff3cd';
+
+resultBox.innerText = `庫存裡目前沒有任何記住的物品喔！請先去右邊新增。`;
+
+return;
+
+}
+
+
+
+let bestMatch = null;
+
+let highestScore = -1;
+
+
+
+items.forEach(item => {
+
+let score = getSimilarity(targetHash, item.hash);
+
+if (score > highestScore) {
+
+highestScore = score;
+
+bestMatch = item;
+
+}
+
+});
+
+
+
+resultBox.style.backgroundColor = 'var(--scan-btn-bg)';
+
+resultBox.innerText = `🎯 幫你找到了！這應該是：\n【 ${bestMatch.name} 】`;
+
+};
+
+}
+
+
+
+// 模式二核心：直接跳出框框讓你新增
+
+function openNewItemForm() {
+
+const resultBox = document.getElementById('result-box');
+
+const saveGroup = document.getElementById('save-group');
+
+
+resultBox.style.backgroundColor = 'var(--add-btn-bg)';
+
+resultBox.innerText = `➕ 正在為新東西建立記憶，請在下方命名：`;
+
+saveGroup.style.display = 'flex';
+
+document.getElementById('item-name').value = '';
+
+}
+
+
+
+// 儲存新資料
+
+function saveItem() {
+
+const name = document.getElementById('item-name').value.trim();
+
+if (!name) return;
+
+
+
+const transaction = db.transaction(["items"], "readwrite");
+
+const store = transaction.objectStore("items");
+
+const newItem = { name: name, hash: currentHash, image: currentBase64 };
+
+
+
+store.add(newItem).onsuccess = function() {
+
+document.getElementById('save-group').style.display = 'none';
+
+document.getElementById('result-box').innerText = `✨ 已將「${name}」成功記錄到物品庫囉！`;
+
+};
+
+}
+
+
+
+function resetScan() {
+
+document.getElementById('zone-ui').style.display = 'grid';
+
+document.getElementById('preview-card').style.display = 'none';
+
+document.getElementById('camera-input').value = "";
+
+}
+
+
+
+// 圖像指紋算法與基礎功能
+
+function calculateImageHash(imgEl) {
+
+const canvas = document.createElement('canvas');
+
+const ctx = canvas.getContext('2d');
+
+canvas.width = 8; canvas.height = 8;
+
+ctx.drawImage(imgEl, 0, 0, 8, 8);
+
+const imgData = ctx.getImageData(0, 0, 8, 8).data;
+
+let grayValues = [], sum = 0;
+
+for (let i = 0; i < imgData.length; i += 4) {
+
+let gray = imgData[i] * 0.299 + imgData[i+1] * 0.587 + imgData[i+2] * 0.114;
+
+grayValues.push(gray); sum += gray;
+
+}
+
+let avg = sum / grayValues.length;
+
+let hash = "";
+
+for (let i = 0; i < grayValues.length; i++) hash += grayValues[i] >= avg ? "1" : "0";
+
+return hash;
+
+}
+
+
+
+function getSimilarity(hash1, hash2) {
+
+let similarity = 0;
+
+for (let i = 0; i < hash1.length; i++) if (hash1[i] === hash2[i]) similarity++;
+
+return (similarity / hash1.length) * 100;
+
+}
+
+
+
+function switchTab(tabName) {
+
+document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+
+document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+
+if (tabName === 'scan') {
+
+document.getElementById('tab-scan').classList.add('active');
+
+document.getElementById('nav-scan-btn').classList.add('active');
+
+document.getElementById('page-title').innerText = "✨ 圖片記憶工作板";
+
+resetScan();
+
+} else {
+
+document.getElementById('tab-library').classList.add('active');
+
+document.getElementById('nav-lib-btn').classList.add('active');
+
+document.getElementById('page-title').innerText = "📦 我的物品庫";
+
+loadHistory();
+
+}
+
+}
+
+
+
+function loadHistory() { renderList(null); }
+
+function searchItems() { const keyword = document.getElementById('search-input').value.trim().toLowerCase(); renderList(keyword === "" ? null : keyword); }
+
+
+function deleteItem(id, name) {
+
+if (confirm(`確定要刪除「${name}」嗎？`)) {
+
+db.transaction(["items"], "readwrite").objectStore("items").delete(id).onsuccess = function() { searchItems(); };
+
+}
+
+}
+
+
+
+function renderList(filterKeyword) {
+
+const historyList = document.getElementById('history-list');
+
+historyList.innerHTML = '';
+
+db.transaction(["items"], "readonly").objectStore("items").getAll().onsuccess = function(e) {
+
+const items = e.target.result;
+
+items.reverse().forEach(item => {
+
+if (filterKeyword && !item.name.toLowerCase().includes(filterKeyword)) return;
+
+const div = document.createElement('div');
+
+div.className = 'history-item';
+
+div.innerHTML = `<div class="delete-btn" onclick="deleteItem(${item.id}, '${item.name}')">✕</div><img src="${item.image}"><span>${item.name}</span>`;
+
+historyList.appendChild(div);
+
+});
+
+};
+
+}
+
+</script>
+
 </body>
+
 </html>
