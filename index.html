@@ -91,7 +91,7 @@
             margin-bottom: 25px;
         }
 
-        /* 🌟 回歸最初版核心：使用原生 label 機制，點擊 100% 成功喚醒相機 */
+        /* 最初版 100% 成功開相機的 label 按鈕機制 */
         .zone-label-btn {
             display: flex;
             flex-direction: column;
@@ -225,7 +225,7 @@
 
     <header>
         <span id="page-title">✨ 圖片記憶</span>
-        <span class="version-badge">v1.3</span>
+        <span class="version-badge">v1.5</span>
     </header>
 
     <div class="container">
@@ -299,7 +299,7 @@
             updateTagPool();
         };
 
-        // 處理照片觸發
+        // 🌟 回歸最初版核心：點擊後直接讀取原始檔案，完全不經過任何會被瀏覽器阻擋的非同步壓縮程式碼
         function handlePhotoTrigger(inputEl, mode) {
             currentMode = mode;
             const file = inputEl.files[0];
@@ -307,24 +307,11 @@
 
             const reader = new FileReader();
             reader.onload = function(event) {
+                currentBase64 = event.target.result;
+                
                 const tempImg = new Image();
                 tempImg.onload = function() {
-                    const targetWidth = 600;
-                    const scaleFactor = targetWidth / tempImg.width;
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
-                    
-                    if(scaleFactor < 1) {
-                        canvas.width = targetWidth;
-                        canvas.height = tempImg.height * scaleFactor;
-                    } else {
-                        canvas.width = tempImg.width;
-                        canvas.height = tempImg.height;
-                    }
-                    
-                    ctx.drawImage(tempImg, 0, 0, canvas.width, canvas.height);
-                    currentBase64 = canvas.toDataURL('image/jpeg', 0.7);
-                    
+                    // 拍照後才在背景默默計算指紋，絕不干擾相機開啟
                     currentHash = calculateImageHash(tempImg);
                     
                     document.getElementById('zone-ui').style.display = 'none';
@@ -337,7 +324,7 @@
                         openNewItemForm();
                     }
                 };
-                tempImg.src = event.target.result;
+                tempImg.src = currentBase64;
             };
             reader.readAsDataURL(file);
         }
@@ -376,7 +363,7 @@
                     resultBox.innerHTML = `🎯 幫你找到了！這應該是：<br><span style="font-size:1.4rem; color:#1b5e20;">【 ${bestMatch.name} 】</span><br><span style="font-size:0.8rem; font-weight:normal; color:var(--text-sub);">相似度：${finalScore}%</span>`;
                 } else {
                     resultBox.style.backgroundColor = 'var(--warning-bg)';
-                    resultBox.innerHTML = `⚠️ <span style="color:#b78103;">注意：找不到非常像的物品...</span><br>庫存表表中目前最接近的是：<span style="color:#b78103;">【 ${bestMatch.name} 】</span><br><span style="font-size:0.8rem; font-weight:normal; color:#b78103;">(相似度僅 ${finalScore}%，這極可能是全新物品，建議點右邊重新建立記憶！)</span>`;
+                    resultBox.innerHTML = `⚠️ <span style="color:#b78103;">注意：找不到非常像的物品...</span><br>庫存表中目前最接近的是：<span style="color:#b78103;">【 ${bestMatch.name} 】</span><br><span style="font-size:0.8rem; font-weight:normal; color:#b78103;">(相似度僅 ${finalScore}%，這極可能是全新物品，建議點右邊重新建立記憶！)</span>`;
                 }
             };
         }
@@ -431,6 +418,7 @@
             document.querySelectorAll('input[type="file"]').forEach(input => input.value = "");
         }
 
+        // 最初版最穩定的 8x8 指紋運算
         function calculateImageHash(imgEl) {
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
