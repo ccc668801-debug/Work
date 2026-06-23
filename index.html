@@ -97,7 +97,6 @@
         .zone-scan { background: var(--scan-btn-bg); border: 3px dashed var(--scan-btn-border); color: #2e7d32; }
         .zone-add { background: var(--add-btn-bg); border: 3px dashed var(--add-btn-border); color: #1565c0; }
         .zone-card span { font-size: 1rem; font-weight: bold; }
-        .zone-card p { font-size: 0.75rem; opacity: 0.8; line-height: 1.4; }
 
         /* 預覽卡片 */
         .preview-card {
@@ -281,10 +280,12 @@
             updateTagPool();
         };
 
-        // 修正後的拍照啟動程式：確保兩個按鈕都能觸發手機相機
+        // 🌟 強效修正：採用最直接穩定的相機喚醒流程
         function startAction(mode) {
             currentMode = mode;
-            document.getElementById('camera-input').click();
+            const fileInput = document.getElementById('camera-input');
+            fileInput.value = ""; // 清空舊值，確保每次點擊都觸發 change 事件
+            fileInput.click();
         }
 
         document.getElementById('camera-input').addEventListener('change', function(e) {
@@ -294,9 +295,8 @@
             const reader = new FileReader();
             reader.onload = function(event) {
                 const tempImg = new Image();
-                tempImg.src = event.target.result;
-                
                 tempImg.onload = function() {
+                    // 🌟 穩定版等比例壓縮算法
                     const targetWidth = 600;
                     const scaleFactor = targetWidth / tempImg.width;
                     const canvas = document.createElement('canvas');
@@ -313,19 +313,20 @@
                     ctx.drawImage(tempImg, 0, 0, canvas.width, canvas.height);
                     currentBase64 = canvas.toDataURL('image/jpeg', 0.7);
                     
+                    // 計算哈希指紋並更新畫面
+                    currentHash = calculateImageHash(tempImg);
+                    
                     document.getElementById('zone-ui').style.display = 'none';
                     document.getElementById('preview-card').style.display = 'block';
+                    document.getElementById('preview-img').src = currentBase64;
                     
-                    const img = document.getElementById('preview-img');
-                    img.src = currentBase64;
-                    
-                    currentHash = calculateImageHash(tempImg);
                     if (currentMode === 'scan') {
                         forceMatchImage(currentHash);
                     } else if (currentMode === 'add') {
                         openNewItemForm();
                     }
                 };
+                tempImg.src = event.target.result;
             };
             reader.readAsDataURL(file);
         });
