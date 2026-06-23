@@ -23,6 +23,8 @@
             --warning-border: #ffeeba;
             --folder-bg: #fff9db; /* 資料夾暖黃底色 */
             --folder-border: #ffe066;
+            --backup-btn: #f3e5f5; /* 馬卡龍紫 */
+            --backup-border: #d1c4e9;
         }
 
         * {
@@ -58,7 +60,6 @@
             gap: 8px;
         }
 
-        /* 版本更新小標籤 */
         .version-badge {
             font-size: 0.75rem;
             background: #e9ecef;
@@ -82,7 +83,6 @@
             display: block;
         }
 
-        /* 核心功能按鈕區 */
         .zone-selection {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -91,7 +91,7 @@
             margin-bottom: 25px;
         }
 
-        /* 🌟 回歸最初版核心：使用原生 label 機制，點擊 100% 成功喚醒相機 */
+        /* ⚡️ 強制相機核心：原生標籤連動 */
         .zone-label-btn {
             display: flex;
             flex-direction: column;
@@ -140,9 +140,28 @@
         input[type="text"]:focus { border-color: var(--primary); }
         button { background-color: var(--primary); color: var(--text-main); border: none; padding: 12px 24px; border-radius: 30px; font-weight: bold; cursor: pointer; }
 
-        /* ================== 📦 智慧資料夾物品庫樣式 ================== */
-        .search-box { background: white; padding: 14px; border-radius: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.02); margin-bottom: 20px; }
+        /* 智慧資料夾物品庫 */
+        .search-box { background: white; padding: 14px; border-radius: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.02); margin-bottom: 15px; }
         
+        .backup-zone {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .backup-btn-ui {
+            background: var(--backup-btn);
+            border: 2px dashed var(--backup-border);
+            border-radius: 16px;
+            padding: 10px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            color: #4a148c;
+            text-align: center;
+            cursor: pointer;
+        }
+        .backup-btn-ui:active { transform: scale(0.98); }
+
         .folder-wrapper {
             background: white;
             border-radius: var(--border-radius);
@@ -164,7 +183,6 @@
             cursor: pointer;
             user-select: none;
         }
-        
         .folder-header:active { background: #fff3bf; }
 
         .folder-content {
@@ -175,9 +193,7 @@
             background: #fafbfc;
         }
 
-        .folder-wrapper.open .folder-content {
-            display: grid;
-        }
+        .folder-wrapper.open .folder-content { display: grid; }
 
         .history-item {
             background: white;
@@ -222,7 +238,7 @@
         .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 0.85rem; font-weight: bold; color: var(--text-sub); cursor: pointer; }
         .nav-item.active { color: var(--text-main); background: #fffdf2; }
 
-        /* 🔍 圖片放大檢視燈箱 (Modal) */
+        /* 🔍 燈箱 (Modal) */
         .lightbox {
             display: none;
             position: fixed;
@@ -260,7 +276,7 @@
 
     <header>
         <span id="page-title">✨ 圖片記憶</span>
-        <span class="version-badge">v1.4</span>
+        <span class="version-badge">v1.6</span>
     </header>
 
     <div class="container">
@@ -269,13 +285,13 @@
             <div class="zone-selection" id="zone-ui">
                 
                 <label class="zone-label-btn zone-scan">
-                    <input type="file" accept="image/*" style="display: none;" onchange="handlePhotoTrigger(this, 'scan')">
+                    <input type="file" accept="image/*" capture="environment" style="display: none;" onchange="handlePhotoTrigger(this, 'scan')">
                     <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                     <span>📸 辨識舊東西</span>
                 </label>
                 
                 <label class="zone-label-btn zone-add">
-                    <input type="file" accept="image/*" style="display: none;" onchange="handlePhotoTrigger(this, 'add')">
+                    <input type="file" accept="image/*" capture="environment" style="display: none;" onchange="handlePhotoTrigger(this, 'add')">
                     <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                     <span>➕ 記憶新東西</span>
                 </label>
@@ -306,6 +322,15 @@
             <div class="search-box">
                 <input type="text" id="search-input" placeholder="🔍 輸入名字搜尋資料夾..." oninput="searchItems()">
             </div>
+
+            <div class="backup-zone">
+                <div class="backup-btn-ui" onclick="exportBackup()">📥 備份全部照片</div>
+                <label class="backup-btn-ui">
+                    📤 還原備份檔案
+                    <input type="file" accept=".json" style="display: none;" onchange="importBackup(this)">
+                </label>
+            </div>
+
             <div id="folder-list-container"></div>
         </div>
 
@@ -340,7 +365,6 @@
             updateTagPool();
         };
 
-        // 處理照片觸發
         function handlePhotoTrigger(inputEl, mode) {
             currentMode = mode;
             const file = inputEl.files[0];
@@ -365,7 +389,6 @@
                     
                     ctx.drawImage(tempImg, 0, 0, canvas.width, canvas.height);
                     currentBase64 = canvas.toDataURL('image/jpeg', 0.7);
-                    
                     currentHash = calculateImageHash(tempImg);
                     
                     document.getElementById('zone-ui').style.display = 'none';
@@ -417,7 +440,7 @@
                     resultBox.innerHTML = `🎯 幫你找到了！這應該是：<br><span style="font-size:1.4rem; color:#1b5e20;">【 ${bestMatch.name} 】</span><br><span style="font-size:0.8rem; font-weight:normal; color:var(--text-sub);">相似度：${finalScore}%</span>`;
                 } else {
                     resultBox.style.backgroundColor = 'var(--warning-bg)';
-                    resultBox.innerHTML = `⚠️ <span style="color:#b78103;">注意：找不到非常像的物品...</span><br>庫存表表中目前最接近的是：<span style="color:#b78103;">【 ${bestMatch.name} 】</span><br><span style="font-size:0.8rem; font-weight:normal; color:#b78103;">(相似度僅 ${finalScore}%，這極可能是全新物品，建議點右邊重新建立記憶！)</span>`;
+                    resultBox.innerHTML = `⚠️ <span style="color:#b78103;">注意：找不到非常像的物品...</span><br>庫存表中目前最接近的是：<span style="color:#b78103;">【 ${bestMatch.name} 】</span><br><span style="font-size:0.8rem; font-weight:normal; color:#b78103;">(相似度僅 ${finalScore}%，這極可能是全新物品，建議點右邊重新建立記憶！)</span>`;
                 }
             };
         }
@@ -523,20 +546,66 @@
             }
         }
 
-        function toggleFolder(el) {
-            el.parentElement.classList.toggle('open');
-        }
-
-        // 🔍 開啟放大視窗
+        function toggleFolder(el) { el.parentElement.classList.toggle('open'); }
         function openLightbox(imgSrc, name, index) {
             document.getElementById('lightbox-img').src = imgSrc;
             document.getElementById('lightbox-caption').innerText = `${name} - 第 ${index} 張`;
             document.getElementById('lightbox').style.display = 'flex';
         }
+        function closeLightbox() { document.getElementById('lightbox').style.display = 'none'; }
 
-        // 🔍 關閉放大視窗
-        function closeLightbox() {
-            document.getElementById('lightbox').style.display = 'none';
+        function exportBackup() {
+            const transaction = db.transaction(["items"], "readonly");
+            transaction.objectStore("items").getAll().onsuccess = function(e) {
+                const allData = e.target.result;
+                if (allData.length === 0) {
+                    alert("目前圖片庫空空如也，沒有資料可以備份喔！");
+                    return;
+                }
+                const jsonString = JSON.stringify(allData);
+                const blob = new Blob([jsonString], { type: "application/json" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = `襪襪圖片庫備份_${new Date().toISOString().slice(0,10)}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            };
+        }
+
+        function importBackup(inputEl) {
+            const file = inputEl.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    if (!Array.isArray(importedData)) {
+                        alert("備份檔案格式不正確！");
+                        return;
+                    }
+                    if (confirm(`匯入將會把備份裡的 ${importedData.length} 張照片加進目前的圖片庫中，確定要執行嗎？`)) {
+                        const transaction = db.transaction(["items"], "readwrite");
+                        const store = transaction.objectStore("items");
+                        importedData.forEach(item => {
+                            const cleanItem = { name: item.name, hash: item.hash, image: item.image };
+                            store.add(cleanItem);
+                        });
+                        transaction.oncomplete = function() {
+                            alert("✨ 資料還原成功囉！");
+                            loadHistory();
+                            updateTagPool();
+                            inputEl.value = "";
+                        };
+                    }
+                } catch (err) {
+                    alert("讀取檔案失敗，請確保這是正確的備份 .json 檔案。");
+                }
+            };
+            reader.readAsText(file);
         }
 
         function renderFolders(filterKeyword) {
@@ -549,21 +618,17 @@
                 
                 items.forEach(item => {
                     if (filterKeyword && !item.name.toLowerCase().includes(filterKeyword)) return;
-                    if (!groups[item.name]) {
-                        groups[item.name] = [];
-                    }
+                    if (!groups[item.name]) { groups[item.name] = []; }
                     groups[item.name].push(item);
                 });
 
                 const groupNames = Object.keys(groups).reverse();
-
                 if(groupNames.length === 0) {
                     container.innerHTML = `<div style="text-align:center; color:var(--text-sub); margin-top:40px; font-size:0.95rem;">沒有找到相符的資料夾喔！</div>`;
                     return;
                 }
 
                 groupNames.forEach(name => {
-                    // 🌟 這裡保持資料夾內的項目（舊的在後、新的在前，或順序自訂），反轉前先算總數
                     const groupItems = groups[name].reverse();
                     const totalCount = groupItems.length;
 
@@ -578,13 +643,10 @@
                     const content = document.createElement('div');
                     content.className = 'folder-content';
                     
-                    // 🌟 重新編排顯示序號：讓它呈現 1, 2, 3... 遞補，而不是跳動的資料庫 ID
                     groupItems.forEach((item, idx) => {
-                        const displayIndex = totalCount - idx; // 新的照片在前面，所以倒著算回來最直覺，或是直接用 idx + 1
-                        
+                        const displayIndex = totalCount - idx; 
                         const itemDiv = document.createElement('div');
                         itemDiv.className = 'history-item';
-                        // 點擊卡片本身（除刪除鈕外）會觸發放大
                         itemDiv.onclick = function() { openLightbox(item.image, name, displayIndex); };
                         
                         itemDiv.innerHTML = `
