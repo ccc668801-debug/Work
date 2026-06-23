@@ -3,132 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>襪襪</title>
+    <title>襪襪標籤對照助手</title>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <style>
-        /* 日系簡約、馬卡龍圓潤風格 */
         :root {
             --bg-color: #f7f9fa;
             --card-bg: #ffffff;
-            --primary: #ffd43b; /* 暖黃 */
+            --primary: #ffd43b; 
             --primary-hover: #fcc419;
-            --scan-btn-bg: #e8f5e9; /* 馬卡龍綠 */
+            --scan-btn-bg: #e8f5e9; 
             --scan-btn-border: #a5d6a7;
-            --add-btn-bg: #e3f2fd; /* 馬卡龍藍 */
+            --add-btn-bg: #e3f2fd; 
             --add-btn-border: #90caf9;
             --text-main: #495057;
             --text-sub: #868e96;
             --border-radius: 24px;
             --danger: #ff8787;
             --warning-bg: #fff3cd;
-            --warning-border: #ffeeba;
-            --folder-bg: #fff9db; /* 資料夾暖黃底色 */
+            --folder-bg: #fff9db; 
             --folder-border: #ffe066;
-            --backup-btn: #f3e5f5; /* 馬卡龍紫 */
+            --backup-btn: #f3e5f5; 
             --backup-border: #d1c4e9;
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: "Helvetica Neue", Arial, "Noto Sans TC", sans-serif;
-            -webkit-tap-highlight-color: transparent;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Helvetica Neue", Arial, "Noto Sans TC", sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background-color: var(--bg-color); color: var(--text-main); display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding-bottom: 80px; }
+        header { width: 100%; max-width: 480px; padding: 20px; text-align: center; background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.02); font-size: 1.2rem; font-weight: bold; display: flex; justify-content: center; align-items: center; gap: 8px; }
+        .version-badge { font-size: 0.75rem; background: #e9ecef; color: var(--text-sub); padding: 2px 8px; border-radius: 12px; font-weight: normal; }
+        .container { width: 100%; max-width: 480px; padding: 20px; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
 
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-            padding-bottom: 80px;
-        }
-
-        header {
-            width: 100%;
-            max-width: 480px;
-            padding: 20px;
-            text-align: center;
-            background: white;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.02);
-            font-size: 1.2rem;
-            font-weight: bold;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .version-badge {
-            font-size: 0.75rem;
-            background: #e9ecef;
-            color: var(--text-sub);
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-weight: normal;
-        }
-
-        .container {
-            width: 100%;
-            max-width: 480px;
-            padding: 20px;
-        }
-
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        .zone-selection {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-            margin-top: 10px;
-            margin-bottom: 25px;
-        }
-
-        /* ⚡️ 強制相機核心：原生標籤連動 */
-        .zone-label-btn {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            border-radius: var(--border-radius);
-            padding: 30px 15px;
-            text-align: center;
-            box-shadow: 0 6px 16px rgba(0,0,0,0.02);
-            cursor: pointer;
-            transition: transform 0.1s ease;
-        }
-
-        .zone-label-btn:active {
-            transform: scale(0.96);
-        }
-
+        .zone-selection { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 10px; margin-bottom: 25px; }
+        .zone-label-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; border-radius: var(--border-radius); padding: 30px 15px; text-align: center; box-shadow: 0 6px 16px rgba(0,0,0,0.02); cursor: pointer; transition: transform 0.1s ease; }
+        .zone-label-btn:active { transform: scale(0.96); }
         .zone-scan { background: var(--scan-btn-bg); border: 3px dashed var(--scan-btn-border); color: #2e7d32; }
         .zone-add { background: var(--add-btn-bg); border: 3px dashed var(--add-btn-border); color: #1565c0; }
         .zone-label-btn span { font-size: 1rem; font-weight: bold; }
 
-        /* 預覽卡片 */
-        .preview-card {
-            background: white;
-            border-radius: var(--border-radius);
-            padding: 20px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.04);
-            width: 100%;
-            display: none;
-            text-align: center;
-        }
-
+        .preview-card { background: white; border-radius: var(--border-radius); padding: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.04); width: 100%; display: none; text-align: center; }
         #preview-img { width: 100%; max-height: 260px; border-radius: 16px; object-fit: cover; }
-        .result-box { margin-top: 15px; padding: 14px; border-radius: 14px; font-weight: bold; font-size: 1.1rem; line-height: 1.5; }
+        .result-box { margin-top: 15px; padding: 14px; border-radius: 14px; font-weight: bold; font-size: 1.1rem; line-height: 1.5; text-align: left; word-break: break-all; }
 
-        /* 標籤池 */
+        .ocr-debug-text { font-size: 0.8rem; font-weight: normal; color: #7f8c8d; background: #f8f9fa; padding: 8px; border-radius: 8px; margin-top: 10px; border: 1px solid #e2e8f0; max-height: 80px; overflow-y: auto; }
+
         .tag-container { margin-top: 15px; text-align: left; }
         .tag-title { font-size: 0.85rem; color: var(--text-sub); margin-bottom: 8px; font-weight: bold; }
         .tag-pool { display: flex; flex-wrap: wrap; gap: 8px; max-height: 120px; overflow-y: auto; padding: 4px; }
@@ -140,265 +58,168 @@
         input[type="text"]:focus { border-color: var(--primary); }
         button { background-color: var(--primary); color: var(--text-main); border: none; padding: 12px 24px; border-radius: 30px; font-weight: bold; cursor: pointer; }
 
-        /* 智慧資料夾物品庫 */
         .search-box { background: white; padding: 14px; border-radius: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.02); margin-bottom: 15px; }
-        
-        .backup-zone {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-        .backup-btn-ui {
-            background: var(--backup-btn);
-            border: 2px dashed var(--backup-border);
-            border-radius: 16px;
-            padding: 10px;
-            font-size: 0.85rem;
-            font-weight: bold;
-            color: #4a148c;
-            text-align: center;
-            cursor: pointer;
-        }
-        .backup-btn-ui:active { transform: scale(0.98); }
+        .backup-zone { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+        .backup-btn-ui { background: var(--backup-btn); border: 2px dashed var(--backup-border); border-radius: 16px; padding: 10px; font-size: 0.85rem; font-weight: bold; color: #4a148c; text-align: center; cursor: pointer; }
 
-        .folder-wrapper {
-            background: white;
-            border-radius: var(--border-radius);
-            margin-bottom: 14px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.02);
-            overflow: hidden;
-            border: 1px solid #edf2f7;
-        }
-
-        .folder-header {
-            background: var(--folder-bg);
-            border-bottom: 2px solid var(--folder-border);
-            padding: 16px 20px;
-            font-weight: bold;
-            font-size: 1rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            cursor: pointer;
-            user-select: none;
-        }
-        .folder-header:active { background: #fff3bf; }
-
-        .folder-content {
-            display: none;
-            padding: 16px;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-            background: #fafbfc;
-        }
-
+        .folder-wrapper { background: white; border-radius: var(--border-radius); margin-bottom: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.02); overflow: hidden; border: 1px solid #edf2f7; }
+        .folder-header { background: var(--folder-bg); border-bottom: 2px solid var(--folder-border); padding: 16px 20px; font-weight: bold; font-size: 1rem; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        .folder-content { display: none; padding: 16px; grid-template-columns: repeat(2, 1fr); gap: 12px; background: #fafbfc; }
         .folder-wrapper.open .folder-content { display: grid; }
 
-        .history-item {
-            background: white;
-            padding: 10px;
-            border-radius: 16px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            position: relative;
-            border: 1px solid #f1f3f5;
-            cursor: pointer;
-        }
-
+        .history-item { background: white; padding: 10px; border-radius: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); display: flex; flex-direction: column; align-items: center; text-align: center; position: relative; border: 1px solid #f1f3f5; cursor: pointer; }
         .history-item img { width: 100%; height: 110px; object-fit: cover; border-radius: 12px; margin-bottom: 6px; }
         .history-item span { font-size: 0.8rem; color: var(--text-sub); width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-        .delete-btn {
-            position: absolute;
-            top: 6px;
-            right: 6px;
-            width: 22px;
-            height: 22px;
-            background: rgba(255, 255, 255, 0.9);
-            border: 1px solid #ffc9c9;
-            border-radius: 50%;
-            color: var(--danger);
-            font-size: 12px;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            z-index: 10;
-        }
-
-        .bottom-nav {
-            position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; height: 65px;
-            background: white; box-shadow: 0 -4px 16px rgba(0,0,0,0.04); display: flex; border-top-left-radius: 20px; border-top-right-radius: 20px; overflow: hidden; z-index: 100;
-        }
+        .delete-btn { position: absolute; top: 6px; right: 6px; width: 22px; height: 22px; background: rgba(255, 255, 255, 0.9); border: 1px solid #ffc9c9; border-radius: 50%; color: var(--danger); font-size: 12px; font-weight: bold; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 10; }
+        .bottom-nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; height: 65px; background: white; box-shadow: 0 -4px 166px rgba(0,0,0,0.04); display: flex; border-top-left-radius: 20px; border-top-right-radius: 20px; overflow: hidden; z-index: 100; }
         .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 0.85rem; font-weight: bold; color: var(--text-sub); cursor: pointer; }
         .nav-item.active { color: var(--text-main); background: #fffdf2; }
 
-        /* 🔍 燈箱 (Modal) */
-        .lightbox {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.85);
-            z-index: 200;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-        .lightbox-content {
-            max-width: 100%;
-            max-height: 80vh;
-            border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-            object-fit: contain;
-        }
-        .lightbox-caption {
-            position: absolute;
-            bottom: 40px;
-            color: white;
-            font-size: 1.1rem;
-            font-weight: bold;
-            background: rgba(0,0,0,0.6);
-            padding: 8px 20px;
-            border-radius: 20px;
-            text-align: center;
-        }
+        .lightbox { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.85); z-index: 200; justify-content: center; align-items: center; padding: 20px; }
+        .lightbox-content { max-width: 100%; max-height: 80vh; border-radius: 16px; object-fit: contain; }
+        .lightbox-caption { position: absolute; bottom: 40px; color: white; font-size: 1.1rem; font-weight: bold; background: rgba(0,0,0,0.6); padding: 8px 20px; border-radius: 20px; }
     </style>
 </head>
 <body>
 
     <header>
-        <span id="page-title">✨ 圖片記憶</span>
-        <span class="version-badge">v1.6</span>
+        <span id="page-title">📝 標籤對照模式</span>
+        <span class="version-badge">v2.0 OCR</span>
     </header>
 
     <div class="container">
-        
         <div id="tab-scan" class="tab-content active">
             <div class="zone-selection" id="zone-ui">
-                
                 <label class="zone-label-btn zone-scan">
-                    <input type="file" accept="image/*" capture="environment" style="display: none;" onchange="handlePhotoTrigger(this, 'scan')">
+                    <input type="file" accept="image/*" capture="environment" style="display: none;" onchange="handleLabelTrigger(this, 'scan')">
                     <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                    <span>📸 辨識舊東西</span>
+                    <span>📸 對照舊標籤</span>
                 </label>
                 
                 <label class="zone-label-btn zone-add">
-                    <input type="file" accept="image/*" capture="environment" style="display: none;" onchange="handlePhotoTrigger(this, 'add')">
+                    <input type="file" accept="image/*" capture="environment" style="display: none;" onchange="handleLabelTrigger(this, 'add')">
                     <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                    <span>➕ 記憶新東西</span>
+                    <span>➕ 記憶新標籤</span>
                 </label>
-                
             </div>
 
             <div class="preview-card" id="preview-card">
-                <img id="preview-img" src="" alt="當前照片">
-                <div id="result-box" class="result-box"></div>
+                <img id="preview-img" src="" alt="標籤照片">
+                <div id="result-box" class="result-box">⚙️ 正在啟動標籤文字掃描大腦...</div>
                 
                 <div id="add-interactive-zone" style="display: none;">
                     <div class="tag-container">
-                        <div class="tag-title">🏷️ 點擊使用常用名字：</div>
+                        <div class="tag-title">🏷️ 點擊使用常用襪子名稱：</div>
                         <div class="tag-pool" id="tag-pool"></div>
                     </div>
-
                     <div class="input-group">
-                        <input type="text" id="item-name" placeholder="請輸入名字或點擊上方標籤...">
-                        <button onclick="saveItem()">記住它</button>
+                        <input type="text" id="item-name" placeholder="輸入這雙襪子的名字...">
+                        <button onclick="saveLabelItem()">記住這款標籤</button>
                     </div>
                 </div>
-                
-                <button style="width:100%; margin-top:16px; background:#f1f3f5; color:var(--text-sub); border:none; padding:12px; border-radius:20px; font-weight:bold; cursor:pointer;" onclick="resetScan()">返回主選單</button>
+                <button id="back-btn" style="width:100%; margin-top:16px; background:#f1f3f5; color:var(--text-sub); border:none; padding:12px; border-radius:20px; font-weight:bold; cursor:pointer; display:none;" onclick="resetScan()">返回主選單</button>
             </div>
         </div>
 
         <div id="tab-library" class="tab-content">
             <div class="search-box">
-                <input type="text" id="search-input" placeholder="🔍 輸入名字搜尋資料夾..." oninput="searchItems()">
+                <input type="text" id="search-input" placeholder="🔍 輸入名字搜尋襪子資料夾..." oninput="searchItems()">
             </div>
-
             <div class="backup-zone">
-                <div class="backup-btn-ui" onclick="exportBackup()">📥 備份全部照片</div>
+                <div class="backup-btn-ui" onclick="exportBackup()">📥 備份全部標籤</div>
                 <label class="backup-btn-ui">
                     📤 還原備份檔案
                     <input type="file" accept=".json" style="display: none;" onchange="importBackup(this)">
                 </label>
             </div>
-
             <div id="folder-list-container"></div>
         </div>
-
     </div>
 
     <div class="bottom-nav">
-        <div class="nav-item active" id="nav-scan-btn" onclick="switchTab('scan')">照片記憶</div>
-        <div class="nav-item" id="nav-lib-btn" onclick="switchTab('library')">圖片庫</div>
+        <div class="nav-item active" id="nav-scan-btn" onclick="switchTab('scan')">標籤對照</div>
+        <div class="nav-item" id="nav-lib-btn" onclick="switchTab('library')">標籤庫</div>
     </div>
 
     <div id="lightbox" class="lightbox" onclick="closeLightbox()">
-        <img id="lightbox-img" class="lightbox-content" src="" alt="放大照片">
+        <img id="lightbox-img" class="lightbox-content" src="">
         <div id="lightbox-caption" class="lightbox-caption"></div>
     </div>
 
     <script>
         let db;
         let currentMode = ""; 
-        let currentHash = "";
+        let currentOcrText = "";
         let currentBase64 = "";
+        let ocrWorker = null;
 
-        const request = indexedDB.open("PikaPerfectDB", 3);
+        // 初始化資料庫
+        const request = indexedDB.open("SockLabelDB", 1);
         request.onupgradeneeded = function(e) {
             db = e.target.result;
-            if (!db.objectStoreNames.contains("items")) {
-                db.createObjectStore("items", { keyPath: "id", autoIncrement: true });
+            if (!db.objectStoreNames.contains("labels")) {
+                db.createObjectStore("labels", { keyPath: "id", autoIncrement: true });
             }
         };
         request.onsuccess = function(e) {
             db = e.target.result;
             loadHistory();
             updateTagPool();
+            initOCR(); // 預先初始化 OCR 大腦
         };
 
-        function handlePhotoTrigger(inputEl, mode) {
+        // 初始化 OCR 引擎
+        async function initOCR() {
+            if (!ocrWorker) {
+                ocrWorker = await Tesseract.createWorker('chi_sim+chi_tra+eng'); // 支援繁中、簡中、英文、數字
+            }
+        }
+
+        async function handleLabelTrigger(inputEl, mode) {
             currentMode = mode;
             const file = inputEl.files[0];
             if (!file) return;
 
+            document.getElementById('zone-ui').style.display = 'none';
+            document.getElementById('preview-card').style.display = 'block';
+            document.getElementById('back-btn').style.style = 'none';
+            document.getElementById('result-box').style.backgroundColor = '#e9ecef';
+            document.getElementById('result-box').innerText = `🔍 正在極速辨識標籤文字，請稍候...`;
+
             const reader = new FileReader();
             reader.onload = function(event) {
                 const tempImg = new Image();
-                tempImg.onload = function() {
-                    const targetWidth = 600;
+                tempImg.onload = async function() {
+                    // 為了辨識文字清晰度，標籤照片調高寬度至 1000px
+                    const targetWidth = 1000;
                     const scaleFactor = targetWidth / tempImg.width;
                     const canvas = document.createElement('canvas');
                     const ctx = canvas.getContext('2d');
-                    
-                    if(scaleFactor < 1) {
-                        canvas.width = targetWidth;
-                        canvas.height = tempImg.height * scaleFactor;
-                    } else {
-                        canvas.width = tempImg.width;
-                        canvas.height = tempImg.height;
-                    }
-                    
+                    canvas.width = scaleFactor < 1 ? targetWidth : tempImg.width;
+                    canvas.height = scaleFactor < 1 ? tempImg.height * scaleFactor : tempImg.height;
                     ctx.drawImage(tempImg, 0, 0, canvas.width, canvas.height);
-                    currentBase64 = canvas.toDataURL('image/jpeg', 0.7);
-                    currentHash = calculateImageHash(tempImg);
                     
-                    document.getElementById('zone-ui').style.display = 'none';
-                    document.getElementById('preview-card').style.display = 'block';
+                    currentBase64 = canvas.toDataURL('image/jpeg', 0.85);
                     document.getElementById('preview-img').src = currentBase64;
-                    
-                    if (currentMode === 'scan') {
-                        forceMatchImage(currentHash);
-                    } else if (currentMode === 'add') {
-                        openNewItemForm();
+
+                    try {
+                        await initOCR();
+                        const { data: { text } } = await ocrWorker.recognize(currentBase64);
+                        // 清洗文字，去掉空格換行，方便後續比對
+                        currentOcrText = text.replace(/\s+/g, '').toLowerCase();
+                        
+                        document.getElementById('back-btn').style.display = 'block';
+                        
+                        if (currentMode === 'scan') {
+                            matchLabelText(currentOcrText, text);
+                        } else if (currentMode === 'add') {
+                            openNewLabelForm(text);
+                        }
+                    } catch (err) {
+                        document.getElementById('result-box').style.backgroundColor = 'var(--danger)';
+                        document.getElementById('result-box').innerText = `❌ 文字辨識發生錯誤，請重新返回拍照試試。`;
+                        document.getElementById('back-btn').style.display = 'block';
                     }
                 };
                 tempImg.src = event.target.result;
@@ -406,58 +227,86 @@
             reader.readAsDataURL(file);
         }
 
-        function forceMatchImage(targetHash) {
-            const transaction = db.transaction(["items"], "readonly");
-            const store = transaction.objectStore("items");
-            const getAll = store.getAll();
+        // 核心文字對照演算法
+        function matchLabelText(cleanedTargetText, rawText) {
+            const resultBox = document.getElementById('result-box');
+            
+            if (!cleanedTargetText || cleanedTargetText.length < 2) {
+                resultBox.style.backgroundColor = 'var(--warning-bg)';
+                resultBox.innerHTML = `⚠️ 標籤拍得太模糊，或是上面沒有字。請靠近一點、拿穩再拍一次！`;
+                return;
+            }
 
-            getAll.onsuccess = function() {
-                const items = getAll.result;
-                const resultBox = document.getElementById('result-box');
-                document.getElementById('add-interactive-zone').style.display = 'none';
+            db.transaction(["labels"], "readonly").objectStore("labels").getAll().onsuccess = function(e) {
+                const items = e.target.result;
 
                 if (items.length === 0) {
                     resultBox.style.backgroundColor = '#fff3cd';
-                    resultBox.innerText = `庫存裡目前沒有任何圖片喔！請先點右邊建立記憶。`;
+                    resultBox.innerText = `庫存裡目前沒有任何標籤資料喔！請先點右邊建立記憶。`;
                     return;
                 }
 
                 let bestMatch = null;
-                let highestScore = -1;
+                let maxMatches = 0;
 
                 items.forEach(item => {
-                    let score = getSimilarity(targetHash, item.hash);
-                    if (score > highestScore) {
-                        highestScore = score;
+                    // 計算新拍的標籤文字跟舊標籤文字有多少「重疊字元數」
+                    let matchCount = 0;
+                    // 以長度較短的字串來比對，找尋連續或重複特徵
+                    const savedText = item.ocrText;
+                    
+                    // 簡易交集字元比對
+                    for(let char of cleanedTargetText) {
+                        if(savedText.includes(char)) {
+                            matchCount++;
+                        }
+                    }
+
+                    if (matchCount > maxMatches) {
+                        maxMatches = matchCount;
                         bestMatch = item;
                     }
                 });
 
-                const finalScore = Math.round(highestScore);
-
-                if (finalScore >= 65) {
+                // 如果重疊字數夠多，代表找到了
+                if (maxMatches >= 4) { 
                     resultBox.style.backgroundColor = 'var(--scan-btn-bg)';
-                    resultBox.innerHTML = `🎯 幫你找到了！這應該是：<br><span style="font-size:1.4rem; color:#1b5e20;">【 ${bestMatch.name} 】</span><br><span style="font-size:0.8rem; font-weight:normal; color:var(--text-sub);">相似度：${finalScore}%</span>`;
+                    resultBox.innerHTML = `🎯 標籤文字比對成功！這是：<br><span style="font-size:1.4rem; color:#1b5e20;">【 ${bestMatch.name} 】</span><br><div class="ocr-debug-text">🔍 這次標籤上認出的字：<br>${rawText}</div>`;
                 } else {
                     resultBox.style.backgroundColor = 'var(--warning-bg)';
-                    resultBox.innerHTML = `⚠️ <span style="color:#b78103;">注意：找不到非常像的物品...</span><br>庫存表中目前最接近的是：<span style="color:#b78103;">【 ${bestMatch.name} 】</span><br><span style="font-size:0.8rem; font-weight:normal; color:#b78103;">(相似度僅 ${finalScore}%，這極可能是全新物品，建議點右邊重新建立記憶！)</span>`;
+                    resultBox.innerHTML = `⚠️ <span style="color:#b78103;">找不到文字吻合的舊標籤...</span><br>這極可能是全新到貨的襪子款式！建議按下方返回，重新點右邊「記憶新標籤」。<br><div class="ocr-debug-text">🔍 這次標籤上認出的字：<br>${rawText}</div>`;
                 }
             };
         }
 
-        function openNewItemForm() {
+        function openNewLabelForm(rawText) {
             const resultBox = document.getElementById('result-box');
             resultBox.style.backgroundColor = 'var(--add-btn-bg)';
-            resultBox.innerText = `➕ 正在為新東西建立記憶：`;
+            resultBox.innerHTML = `⚙️ 標籤文字讀取成功！請在下方輸入這雙襪子的名字或編號：<br><div class="ocr-debug-text">📋 讀取到的標籤內容：<br>${rawText}</div>`;
             document.getElementById('add-interactive-zone').style.display = 'block';
             document.getElementById('item-name').value = '';
             updateTagPool();
         }
 
+        function saveLabelItem() {
+            const name = document.getElementById('item-name').value.trim();
+            if (!name) return;
+
+            const transaction = db.transaction(["labels"], "readwrite");
+            const store = transaction.objectStore("labels");
+            const newItem = { name: name, ocrText: currentOcrText, image: currentBase64 };
+
+            store.add(newItem).onsuccess = function() {
+                document.getElementById('add-interactive-zone').style.display = 'none';
+                document.getElementById('result-box').innerHTML = `✨ 成功！以後只要拍到包含這堆文字的標籤，我就會認出它是「<span style="color:#0d47a1;">${name}</span>」了！`;
+                updateTagPool();
+            };
+        }
+
         function updateTagPool() {
             const pool = document.getElementById('tag-pool');
             pool.innerHTML = '';
-            db.transaction(["items"], "readonly").objectStore("items").getAll().onsuccess = function(e) {
+            db.transaction(["labels"], "readonly").objectStore("labels").getAll().onsuccess = function(e) {
                 const items = e.target.result;
                 const uniqueNames = [...new Set(items.map(item => item.name))];
                 if(uniqueNames.length === 0) {
@@ -474,48 +323,11 @@
             };
         }
 
-        function saveItem() {
-            const name = document.getElementById('item-name').value.trim();
-            if (!name) return;
-
-            const transaction = db.transaction(["items"], "readwrite");
-            const store = transaction.objectStore("items");
-            const newItem = { name: name, hash: currentHash, image: currentBase64 };
-
-            store.add(newItem).onsuccess = function() {
-                document.getElementById('add-interactive-zone').style.display = 'none';
-                document.getElementById('result-box').innerHTML = `✨ 已將「<span style="color:#0d47a1;">${name}</span>」成功記錄到圖片囉！`;
-                updateTagPool();
-            };
-        }
-
         function resetScan() {
             document.getElementById('zone-ui').style.display = 'grid';
             document.getElementById('preview-card').style.display = 'none';
+            document.getElementById('back-btn').style.display = 'none';
             document.querySelectorAll('input[type="file"]').forEach(input => input.value = "");
-        }
-
-        function calculateImageHash(imgEl) {
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            canvas.width = 8; canvas.height = 8;
-            ctx.drawImage(imgEl, 0, 0, 8, 8);
-            const imgData = ctx.getImageData(0, 0, 8, 8).data;
-            let grayValues = [], sum = 0;
-            for (let i = 0; i < imgData.length; i += 4) {
-                let gray = imgData[i] * 0.299 + imgData[i+1] * 0.587 + imgData[i+2] * 0.114;
-                grayValues.push(gray); sum += gray;
-            }
-            let avg = sum / grayValues.length;
-            let hash = "";
-            for (let i = 0; i < grayValues.length; i++) hash += grayValues[i] >= avg ? "1" : "0";
-            return hash;
-        }
-
-        function getSimilarity(hash1, hash2) {
-            let similarity = 0;
-            for (let i = 0; i < hash1.length; i++) if (hash1[i] === hash2[i]) similarity++;
-            return (similarity / hash1.length) * 100;
         }
 
         function switchTab(tabName) {
@@ -524,12 +336,12 @@
             if (tabName === 'scan') {
                 document.getElementById('tab-scan').classList.add('active');
                 document.getElementById('nav-scan-btn').classList.add('active');
-                document.getElementById('page-title').innerText = "✨ 圖片記憶";
+                document.getElementById('page-title').innerText = "📝 標籤對照模式";
                 resetScan();
             } else {
                 document.getElementById('tab-library').classList.add('active');
                 document.getElementById('nav-lib-btn').classList.add('active');
-                document.getElementById('page-title').innerText = "📦圖片庫";
+                document.getElementById('page-title').innerText = "📦 標籤庫";
                 loadHistory();
             }
         }
@@ -538,8 +350,8 @@
         function searchItems() { const keyword = document.getElementById('search-input').value.trim().toLowerCase(); renderFolders(keyword === "" ? null : keyword); }
         
         function deleteItem(id, name) {
-            if (confirm(`確定要刪除這張照片嗎？`)) {
-                db.transaction(["items"], "readwrite").objectStore("items").delete(id).onsuccess = function() { 
+            if (confirm(`確定要刪除這個標籤資料嗎？`)) {
+                db.transaction(["labels"], "readwrite").objectStore("labels").delete(id).onsuccess = function() { 
                     searchItems(); 
                     updateTagPool();
                 };
@@ -549,61 +361,47 @@
         function toggleFolder(el) { el.parentElement.classList.toggle('open'); }
         function openLightbox(imgSrc, name, index) {
             document.getElementById('lightbox-img').src = imgSrc;
-            document.getElementById('lightbox-caption').innerText = `${name} - 第 ${index} 張`;
+            document.getElementById('lightbox-caption').innerText = `${name} - 標籤第 ${index} 張`;
             document.getElementById('lightbox').style.display = 'flex';
         }
         function closeLightbox() { document.getElementById('lightbox').style.display = 'none'; }
 
         function exportBackup() {
-            const transaction = db.transaction(["items"], "readonly");
-            transaction.objectStore("items").getAll().onsuccess = function(e) {
+            const transaction = db.transaction(["labels"], "readonly");
+            transaction.objectStore("labels").getAll().onsuccess = function(e) {
                 const allData = e.target.result;
-                if (allData.length === 0) {
-                    alert("目前圖片庫空空如也，沒有資料可以備份喔！");
-                    return;
-                }
+                if (allData.length === 0) { alert("目前沒有標籤資料可以備份喔！"); return; }
                 const jsonString = JSON.stringify(allData);
                 const blob = new Blob([jsonString], { type: "application/json" });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement("a");
                 a.href = url;
-                a.download = `襪襪圖片庫備份_${new Date().toISOString().slice(0,10)}.json`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
+                a.download = `襪子標籤庫備份_${new Date().toISOString().slice(0,10)}.json`;
+                document.body.appendChild(a); a.click(); document.body.removeChild(a);
                 URL.revokeObjectURL(url);
             };
         }
 
         function importBackup(inputEl) {
-            const file = inputEl.files[0];
-            if (!file) return;
-
+            const file = inputEl.files[0]; if (!file) return;
             const reader = new FileReader();
             reader.onload = function(e) {
                 try {
                     const importedData = JSON.parse(e.target.result);
-                    if (!Array.isArray(importedData)) {
-                        alert("備份檔案格式不正確！");
-                        return;
-                    }
-                    if (confirm(`匯入將會把備份裡的 ${importedData.length} 張照片加進目前的圖片庫中，確定要執行嗎？`)) {
-                        const transaction = db.transaction(["items"], "readwrite");
-                        const store = transaction.objectStore("items");
+                    if (!Array.isArray(importedData)) { alert("備份檔案格式不正確！"); return; }
+                    if (confirm(`匯入將會把備份裡的 ${importedData.length} 筆標籤資料加進來，確定嗎？`)) {
+                        const transaction = db.transaction(["labels"], "readwrite");
+                        const store = transaction.objectStore("labels");
                         importedData.forEach(item => {
-                            const cleanItem = { name: item.name, hash: item.hash, image: item.image };
+                            const cleanItem = { name: item.name, ocrText: item.ocrText, image: item.image };
                             store.add(cleanItem);
                         });
                         transaction.oncomplete = function() {
-                            alert("✨ 資料還原成功囉！");
-                            loadHistory();
-                            updateTagPool();
-                            inputEl.value = "";
+                            alert("✨ 標籤還原成功囉！");
+                            loadHistory(); updateTagPool(); inputEl.value = "";
                         };
                     }
-                } catch (err) {
-                    alert("讀取檔案失敗，請確保這是正確的備份 .json 檔案。");
-                }
+                } catch (err) { alert("讀取檔案失敗。"); }
             };
             reader.readAsText(file);
         }
@@ -612,7 +410,7 @@
             const container = document.getElementById('folder-list-container');
             container.innerHTML = '';
 
-            db.transaction(["items"], "readonly").objectStore("items").getAll().onsuccess = function(e) {
+            db.transaction(["labels"], "readonly").objectStore("labels").getAll().onsuccess = function(e) {
                 const items = e.target.result;
                 const groups = {};
                 
@@ -638,7 +436,7 @@
                     const header = document.createElement('div');
                     header.className = 'folder-header';
                     header.onclick = function() { toggleFolder(this); };
-                    header.innerHTML = `<span>📁 ${name}</span> <span style="font-size:0.85rem; color:var(--text-sub); background:rgba(0,0,0,0.04); padding:2px 10px; border-radius:12px;">共 ${totalCount} 張</span>`;
+                    header.innerHTML = `<span>📁 ${name}</span> <span style="font-size:0.85rem; color:var(--text-sub); background:rgba(0,0,0,0.04); padding:2px 10px; border-radius:12px;">共 ${totalCount} 筆</span>`;
                     
                     const content = document.createElement('div');
                     content.className = 'folder-content';
@@ -652,7 +450,7 @@
                         itemDiv.innerHTML = `
                             <div class="delete-btn" onclick="event.stopPropagation(); deleteItem(${item.id}, '${item.name}')">✕</div>
                             <img src="${item.image}">
-                            <span>第 ${displayIndex} 張</span>
+                            <span>標籤第 ${displayIndex} 張</span>
                         `;
                         content.appendChild(itemDiv);
                     });
