@@ -130,7 +130,6 @@
         /* ================== 📦 智慧資料夾物品庫樣式 ================== */
         .search-box { background: white; padding: 14px; border-radius: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.02); margin-bottom: 20px; }
         
-        /* 資料夾大外框 */
         .folder-wrapper {
             background: white;
             border-radius: var(--border-radius);
@@ -140,7 +139,6 @@
             border: 1px solid #edf2f7;
         }
 
-        /* 資料夾頂部方塊（可點擊） */
         .folder-header {
             background: var(--folder-bg);
             border-bottom: 2px solid var(--folder-border);
@@ -156,16 +154,14 @@
         
         .folder-header:active { background: #fff3bf; }
 
-        /* 資料夾收納內層區 */
         .folder-content {
-            display: none; /* 預設收起來 */
+            display: none;
             padding: 16px;
             grid-template-columns: repeat(2, 1fr);
             gap: 12px;
             background: #fafbfc;
         }
 
-        /* 當資料夾被激活展開時 */
         .folder-wrapper.open .folder-content {
             display: grid;
         }
@@ -204,7 +200,6 @@
             cursor: pointer;
         }
 
-        /* 底部導覽 */
         .bottom-nav {
             position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; height: 65px;
             background: white; box-shadow: 0 -4px 16px rgba(0,0,0,0.04); display: flex; border-top-left-radius: 20px; border-top-right-radius: 20px; overflow: hidden; z-index: 100;
@@ -223,7 +218,7 @@
             <div class="zone-selection" id="zone-ui">
                 <div class="zone-card zone-scan" onclick="startAction('scan')">
                     <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                    <span>📸 辨識舊東西</span>                
+                    <span>📸 辨識舊東西</span>
                 </div>
                 
                 <div class="zone-card zone-add" onclick="startAction('add')">
@@ -264,8 +259,8 @@
     </div>
 
     <div class="bottom-nav">
-        <div class="nav-item active" id="nav-scan-btn" onclick="switchTab('scan')">工作板</div>
-        <div class="nav-item" id="nav-lib-btn" onclick="switchTab('library')">我的圖片庫</div>
+        <div class="nav-item active" id="nav-scan-btn" onclick="switchTab('scan')">照片記憶</div>
+        <div class="nav-item" id="nav-lib-btn" onclick="switchTab('library')">圖片庫</div>
     </div>
     <script>
         let db;
@@ -286,6 +281,7 @@
             updateTagPool();
         };
 
+        // 修正後的拍照啟動程式：確保兩個按鈕都能觸發手機相機
         function startAction(mode) {
             currentMode = mode;
             document.getElementById('camera-input').click();
@@ -326,7 +322,7 @@
                     currentHash = calculateImageHash(tempImg);
                     if (currentMode === 'scan') {
                         forceMatchImage(currentHash);
-                    } else {
+                    } else if (currentMode === 'add') {
                         openNewItemForm();
                     }
                 };
@@ -346,7 +342,7 @@
 
                 if (items.length === 0) {
                     resultBox.style.backgroundColor = '#fff3cd';
-                    resultBox.innerText = `庫存裡目前沒有任何物品喔！請先點右邊建立記憶。`;
+                    resultBox.innerText = `庫存裡目前沒有任何圖片喔！請先點右邊建立記憶。`;
                     return;
                 }
 
@@ -412,7 +408,7 @@
 
             store.add(newItem).onsuccess = function() {
                 document.getElementById('add-interactive-zone').style.display = 'none';
-                document.getElementById('result-box').innerHTML = `✨ 已將「<span style="color:#0d47a1;">${name}</span>」成功記錄到圖片庫囉！`;
+                document.getElementById('result-box').innerHTML = `✨ 已將「<span style="color:#0d47a1;">${name}</span>」成功記錄到圖片囉！`;
                 updateTagPool();
             };
         }
@@ -457,7 +453,7 @@
             } else {
                 document.getElementById('tab-library').classList.add('active');
                 document.getElementById('nav-lib-btn').classList.add('active');
-                document.getElementById('page-title').innerText = "📦 圖片庫";
+                document.getElementById('page-title').innerText = "📦圖片庫";
                 loadHistory();
             }
         }
@@ -478,16 +474,14 @@
             el.parentElement.classList.toggle('open');
         }
 
-        // 🌟 核心功能：把相同名字的自動歸類到同一個資料夾
         function renderFolders(filterKeyword) {
             const container = document.getElementById('folder-list-container');
             container.innerHTML = '';
 
             db.transaction(["items"], "readonly").objectStore("items").getAll().onsuccess = function(e) {
                 const items = e.target.result;
-                
-                // 1. 先用物件把同名字的歸類在一起
                 const groups = {};
+                
                 items.forEach(item => {
                     if (filterKeyword && !item.name.toLowerCase().includes(filterKeyword)) return;
                     if (!groups[item.name]) {
@@ -503,20 +497,16 @@
                     return;
                 }
 
-                // 2. 開始渲染每個資料夾
                 groupNames.forEach(name => {
-                    const groupItems = groups[name].reverse(); // 讓最新的照片在前面
-                    
+                    const groupItems = groups[name].reverse();
                     const wrapper = document.createElement('div');
                     wrapper.className = 'folder-wrapper';
                     
-                    // 資料夾頂部列
                     const header = document.createElement('div');
                     header.className = 'folder-header';
                     header.onclick = function() { toggleFolder(this); };
                     header.innerHTML = `<span>📁 ${name}</span> <span style="font-size:0.85rem; color:var(--text-sub); background:rgba(0,0,0,0.04); padding:2px 10px; border-radius:12px;">共 ${groupItems.length} 張</span>`;
                     
-                    // 資料夾收納區
                     const content = document.createElement('div');
                     content.className = 'folder-content';
                     
