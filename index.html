@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PikaMemory - 百分比精準防錯版</title>
+    <title>襪襪</title>
     <style>
         /* 日系簡約、馬卡龍圓潤風格 */
         :root {
@@ -11,9 +11,9 @@
             --card-bg: #ffffff;
             --primary: #ffd43b; /* 暖黃 */
             --primary-hover: #fcc419;
-            --scan-btn-bg: #e8f5e9; /* 馬卡龍綠 (舊東西辨識) */
+            --scan-btn-bg: #e8f5e9; /* 馬卡龍綠 */
             --scan-btn-border: #a5d6a7;
-            --add-btn-bg: #e3f2fd; /* 馬卡龍藍 (新東西建立) */
+            --add-btn-bg: #e3f2fd; /* 馬卡龍藍 */
             --add-btn-border: #90caf9;
             --text-main: #495057;
             --text-sub: #868e96;
@@ -21,6 +21,8 @@
             --danger: #ff8787;
             --warning-bg: #fff3cd;
             --warning-border: #ffeeba;
+            --folder-bg: #fff9db; /* 資料夾暖黃底色 */
+            --folder-border: #ffe066;
         }
 
         * {
@@ -66,7 +68,7 @@
             display: block;
         }
 
-        /* 兩大核心功能按鈕區 */
+        /* 核心功能按鈕 */
         .zone-selection {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -92,30 +94,12 @@
             transform: scale(0.96);
         }
 
-        .zone-scan {
-            background: var(--scan-btn-bg);
-            border: 3px dashed var(--scan-btn-border);
-            color: #2e7d32;
-        }
+        .zone-scan { background: var(--scan-btn-bg); border: 3px dashed var(--scan-btn-border); color: #2e7d32; }
+        .zone-add { background: var(--add-btn-bg); border: 3px dashed var(--add-btn-border); color: #1565c0; }
+        .zone-card span { font-size: 1rem; font-weight: bold; }
+        .zone-card p { font-size: 0.75rem; opacity: 0.8; line-height: 1.4; }
 
-        .zone-add {
-            background: var(--add-btn-bg);
-            border: 3px dashed var(--add-btn-border);
-            color: #1565c0;
-        }
-
-        .zone-card span {
-            font-size: 1rem;
-            font-weight: bold;
-        }
-
-        .zone-card p {
-            font-size: 0.75rem;
-            opacity: 0.8;
-            line-height: 1.4;
-        }
-
-        /* 拍攝後的結果展示卡片 */
+        /* 預覽卡片 */
         .preview-card {
             background: white;
             border-radius: var(--border-radius);
@@ -126,192 +110,112 @@
             text-align: center;
         }
 
-        #preview-img {
-            width: 100%;
-            max-height: 260px;
-            border-radius: 16px;
-            object-fit: cover;
-        }
+        #preview-img { width: 100%; max-height: 260px; border-radius: 16px; object-fit: cover; }
+        .result-box { margin-top: 15px; padding: 14px; border-radius: 14px; font-weight: bold; font-size: 1.1rem; line-height: 1.5; }
 
-        .result-box {
-            margin-top: 15px;
-            padding: 14px;
-            border-radius: 14px;
-            font-weight: bold;
-            font-size: 1.1rem;
-            line-height: 1.5;
-        }
+        /* 標籤池 */
+        .tag-container { margin-top: 15px; text-align: left; }
+        .tag-title { font-size: 0.85rem; color: var(--text-sub); margin-bottom: 8px; font-weight: bold; }
+        .tag-pool { display: flex; flex-wrap: wrap; gap: 8px; max-height: 120px; overflow-y: auto; padding: 4px; }
+        .quick-tag { background: #f1f3f5; color: var(--text-main); padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; font-weight: bold; cursor: pointer; border: 1px solid #e9ecef; }
+        .quick-tag:active { background: var(--primary); }
 
-        /* 常用標籤選擇區 */
-        .tag-container {
-            margin-top: 15px;
-            text-align: left;
-        }
-        .tag-title {
-            font-size: 0.85rem;
-            color: var(--text-sub);
-            margin-bottom: 8px;
-            font-weight: bold;
-        }
-        .tag-pool {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            max-height: 120px;
-            overflow-y: auto;
-            padding: 4px;
-        }
-        .quick-tag {
-            background: #f1f3f5;
-            color: var(--text-main);
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.15s;
-            border: 1px solid #e9ecef;
-        }
-        .quick-tag:active {
-            background: var(--primary);
-            transform: scale(0.95);
-        }
-
-        .input-group {
-            margin-top: 15px;
-            display: flex;
-            gap: 8px;
-        }
-
-        input[type="text"] {
-            flex: 1;
-            padding: 12px 18px;
-            border: 2px solid #e9ecef;
-            border-radius: 30px;
-            font-size: 0.95rem;
-            outline: none;
-        }
-
-        input[type="text"]:focus {
-            border-color: var(--primary);
-        }
-
-        button {
-            background-color: var(--primary);
-            color: var(--text-main);
-            border: none;
-            padding: 12px 24px;
-            border-radius: 30px;
-            font-weight: bold;
-            cursor: pointer;
-            font-size: 0.95rem;
-        }
+        .input-group { margin-top: 15px; display: flex; gap: 8px; }
+        input[type="text"] { flex: 1; padding: 12px 18px; border: 2px solid #e9ecef; border-radius: 30px; font-size: 0.95rem; outline: none; }
+        input[type="text"]:focus { border-color: var(--primary); }
+        button { background-color: var(--primary); color: var(--text-main); border: none; padding: 12px 24px; border-radius: 30px; font-weight: bold; cursor: pointer; }
 
         #camera-input { display: none; }
 
-        /* ================== 分頁二：物品庫 ================== */
-        .search-box {
+        /* ================== 📦 智慧資料夾物品庫樣式 ================== */
+        .search-box { background: white; padding: 14px; border-radius: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.02); margin-bottom: 20px; }
+        
+        /* 資料夾大外框 */
+        .folder-wrapper {
             background: white;
-            padding: 14px;
-            border-radius: 20px;
+            border-radius: var(--border-radius);
+            margin-bottom: 14px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.02);
-            margin-bottom: 20px;
+            overflow: hidden;
+            border: 1px solid #edf2f7;
         }
 
-        .history-list {
-            display: grid;
+        /* 資料夾頂部方塊（可點擊） */
+        .folder-header {
+            background: var(--folder-bg);
+            border-bottom: 2px solid var(--folder-border);
+            padding: 16px 20px;
+            font-weight: bold;
+            font-size: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+        }
+        
+        .folder-header:active { background: #fff3bf; }
+
+        /* 資料夾收納內層區 */
+        .folder-content {
+            display: none; /* 預設收起來 */
+            padding: 16px;
             grid-template-columns: repeat(2, 1fr);
             gap: 12px;
+            background: #fafbfc;
+        }
+
+        /* 當資料夾被激活展開時 */
+        .folder-wrapper.open .folder-content {
+            display: grid;
         }
 
         .history-item {
             background: white;
             padding: 10px;
             border-radius: 16px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
             display: flex;
             flex-direction: column;
             align-items: center;
             text-align: center;
             position: relative;
+            border: 1px solid #f1f3f5;
         }
 
-        .history-item img {
-            width: 100%;
-            height: 120px;
-            object-fit: cover;
-            border-radius: 12px;
-            margin-bottom: 8px;
-        }
-
-        .history-item span {
-            font-size: 0.9rem;
-            font-weight: bold;
-            color: var(--text-main);
-            width: 100%;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
+        .history-item img { width: 100%; height: 110px; object-fit: cover; border-radius: 12px; margin-bottom: 6px; }
+        .history-item span { font-size: 0.8rem; color: var(--text-sub); width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
         .delete-btn {
             position: absolute;
             top: 6px;
             right: 6px;
-            width: 24px;
-            height: 24px;
+            width: 22px;
+            height: 22px;
             background: rgba(255, 255, 255, 0.9);
             border: 1px solid #ffc9c9;
             border-radius: 50%;
             color: var(--danger);
-            font-size: 14px;
+            font-size: 12px;
             font-weight: bold;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
         }
 
+        /* 底部導覽 */
         .bottom-nav {
-            position: fixed;
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 100%;
-            max-width: 480px;
-            height: 65px;
-            background: white;
-            box-shadow: 0 -4px 16px rgba(0,0,0,0.04);
-            display: flex;
-            border-top-left-radius: 20px;
-            border-top-right-radius: 20px;
-            overflow: hidden;
-            z-index: 100;
+            position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; height: 65px;
+            background: white; box-shadow: 0 -4px 16px rgba(0,0,0,0.04); display: flex; border-top-left-radius: 20px; border-top-right-radius: 20px; overflow: hidden; z-index: 100;
         }
-
-        .nav-item {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 4px;
-            font-size: 0.85rem;
-            font-weight: bold;
-            color: var(--text-sub);
-            cursor: pointer;
-        }
-
-        .nav-item.active {
-            color: var(--text-main);
-            background: #fffdf2;
-        }
+        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 0.85rem; font-weight: bold; color: var(--text-sub); cursor: pointer; }
+        .nav-item.active { color: var(--text-main); background: #fffdf2; }
     </style>
 </head>
 <body>
 
-    <header id="page-title">✨ 圖片記憶工作板</header>
+    <header id="page-title">✨ 圖片記憶</header>
 
     <div class="container">
         
@@ -319,14 +223,12 @@
             <div class="zone-selection" id="zone-ui">
                 <div class="zone-card zone-scan" onclick="startAction('scan')">
                     <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                    <span>📸 辨識舊東西</span>
-                    <p>我確定以前拍過它<br>直接幫我認出來</p>
+                    <span>📸 辨識舊東西</span>                
                 </div>
                 
                 <div class="zone-card zone-add" onclick="startAction('add')">
                     <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                     <span>➕ 記憶新東西</span>
-                    <p>這是一個全新物品<br>拍照並幫它取名字</p>
                 </div>
             </div>
 
@@ -354,16 +256,16 @@
 
         <div id="tab-library" class="tab-content">
             <div class="search-box">
-                <input type="text" id="search-input" placeholder="🔍 輸入名字搜尋你拍過的舊照片..." oninput="searchItems()">
+                <input type="text" id="search-input" placeholder="🔍 輸入名字搜尋資料夾..." oninput="searchItems()">
             </div>
-            <div class="history-list" id="history-list"></div>
+            <div id="folder-list-container"></div>
         </div>
 
     </div>
 
     <div class="bottom-nav">
         <div class="nav-item active" id="nav-scan-btn" onclick="switchTab('scan')">工作板</div>
-        <div class="nav-item" id="nav-lib-btn" onclick="switchTab('library')">我的物品庫</div>
+        <div class="nav-item" id="nav-lib-btn" onclick="switchTab('library')">我的圖片庫</div>
     </div>
     <script>
         let db;
@@ -371,7 +273,7 @@
         let currentHash = "";
         let currentBase64 = "";
 
-        const request = indexedDB.open("PikaPerfectDB", 3); // 升級資料庫名稱防衝突
+        const request = indexedDB.open("PikaPerfectDB", 3);
         request.onupgradeneeded = function(e) {
             db = e.target.result;
             if (!db.objectStoreNames.contains("items")) {
@@ -432,7 +334,6 @@
             reader.readAsDataURL(file);
         });
 
-        // 🌟 模式一優化：加入相似度分析與防呆警告
         function forceMatchImage(targetHash) {
             const transaction = db.transaction(["items"], "readonly");
             const store = transaction.objectStore("items");
@@ -460,15 +361,12 @@
                     }
                 });
 
-                // 四捨五入成整數百分比
                 const finalScore = Math.round(highestScore);
 
                 if (finalScore >= 65) {
-                    // 把握度足夠
                     resultBox.style.backgroundColor = 'var(--scan-btn-bg)';
                     resultBox.innerHTML = `🎯 幫你找到了！這應該是：<br><span style="font-size:1.4rem; color:#1b5e20;">【 ${bestMatch.name} 】</span><br><span style="font-size:0.8rem; font-weight:normal; color:var(--text-sub);">相似度：${finalScore}%</span>`;
                 } else {
-                    // 🌟 核心防錯：相似度太低時，跳出黃色警示，防止誤判！
                     resultBox.style.backgroundColor = 'var(--warning-bg)';
                     resultBox.innerHTML = `⚠️ <span style="color:#b78103;">注意：找不到非常像的物品...</span><br>庫存中最接近的是：<span style="color:#b78103;">【 ${bestMatch.name} 】</span><br><span style="font-size:0.8rem; font-weight:normal; color:#b78103;">(相似度僅 ${finalScore}%，這極可能是全新物品，建議點右邊重新建立記憶！)</span>`;
                 }
@@ -479,7 +377,6 @@
             const resultBox = document.getElementById('result-box');
             resultBox.style.backgroundColor = 'var(--add-btn-bg)';
             resultBox.innerText = `➕ 正在為新東西建立記憶：`;
-            
             document.getElementById('add-interactive-zone').style.display = 'block';
             document.getElementById('item-name').value = '';
             updateTagPool();
@@ -488,23 +385,18 @@
         function updateTagPool() {
             const pool = document.getElementById('tag-pool');
             pool.innerHTML = '';
-
             db.transaction(["items"], "readonly").objectStore("items").getAll().onsuccess = function(e) {
                 const items = e.target.result;
                 const uniqueNames = [...new Set(items.map(item => item.name))];
-                
                 if(uniqueNames.length === 0) {
                     pool.innerHTML = `<span style="font-size:0.85rem; color:var(--text-sub);">目前還沒有常用名字，請手動輸入一次。</span>`;
                     return;
                 }
-
                 uniqueNames.forEach(name => {
                     const span = document.createElement('span');
                     span.className = 'quick-tag';
                     span.innerText = name;
-                    span.onclick = function() {
-                        document.getElementById('item-name').value = name;
-                    };
+                    span.onclick = function() { document.getElementById('item-name').value = name; };
                     pool.appendChild(span);
                 });
             };
@@ -520,7 +412,7 @@
 
             store.add(newItem).onsuccess = function() {
                 document.getElementById('add-interactive-zone').style.display = 'none';
-                document.getElementById('result-box').innerHTML = `✨ 已將「<span style="color:#0d47a1;">${name}</span>」成功記錄到物品庫囉！`;
+                document.getElementById('result-box').innerHTML = `✨ 已將「<span style="color:#0d47a1;">${name}</span>」成功記錄到圖片庫囉！`;
                 updateTagPool();
             };
         }
@@ -554,31 +446,27 @@
             return (similarity / hash1.length) * 100;
         }
 
-        style = document.createElement('style');
-        style.innerHTML = '.result-box span { font-weight: bold; }';
-        document.head.appendChild(style);
-
         function switchTab(tabName) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
             if (tabName === 'scan') {
                 document.getElementById('tab-scan').classList.add('active');
                 document.getElementById('nav-scan-btn').classList.add('active');
-                document.getElementById('page-title').innerText = "✨ 圖片記憶工作板";
+                document.getElementById('page-title').innerText = "✨ 圖片記憶";
                 resetScan();
             } else {
                 document.getElementById('tab-library').classList.add('active');
                 document.getElementById('nav-lib-btn').classList.add('active');
-                document.getElementById('page-title').innerText = "📦 我的物品庫";
+                document.getElementById('page-title').innerText = "📦 圖片庫";
                 loadHistory();
             }
         }
 
-        function loadHistory() { renderList(null); }
-        function searchItems() { const keyword = document.getElementById('search-input').value.trim().toLowerCase(); renderList(keyword === "" ? null : keyword); }
+        function loadHistory() { renderFolders(null); }
+        function searchItems() { const keyword = document.getElementById('search-input').value.trim().toLowerCase(); renderFolders(keyword === "" ? null : keyword); }
         
         function deleteItem(id, name) {
-            if (confirm(`確定要刪除「${name}」嗎？`)) {
+            if (confirm(`確定要刪除這張照片嗎？`)) {
                 db.transaction(["items"], "readwrite").objectStore("items").delete(id).onsuccess = function() { 
                     searchItems(); 
                     updateTagPool();
@@ -586,21 +474,69 @@
             }
         }
 
-        function renderList(filterKeyword) {
-            const historyList = document.getElementById('history-list');
-            historyList.innerHTML = '';
+        function toggleFolder(el) {
+            el.parentElement.classList.toggle('open');
+        }
+
+        // 🌟 核心功能：把相同名字的自動歸類到同一個資料夾
+        function renderFolders(filterKeyword) {
+            const container = document.getElementById('folder-list-container');
+            container.innerHTML = '';
+
             db.transaction(["items"], "readonly").objectStore("items").getAll().onsuccess = function(e) {
                 const items = e.target.result;
-                items.reverse().forEach(item => {
+                
+                // 1. 先用物件把同名字的歸類在一起
+                const groups = {};
+                items.forEach(item => {
                     if (filterKeyword && !item.name.toLowerCase().includes(filterKeyword)) return;
-                    const div = document.createElement('div');
-                    div.className = 'history-item';
-                    div.innerHTML = `<div class="delete-btn" onclick="deleteItem(${item.id}, '${item.name}')">✕</div><img src="${item.image}"><span>${item.name}</span>`;
-                    historyList.appendChild(div);
+                    if (!groups[item.name]) {
+                        groups[item.name] = [];
+                    }
+                    groups[item.name].push(item);
+                });
+
+                const groupNames = Object.keys(groups).reverse();
+
+                if(groupNames.length === 0) {
+                    container.innerHTML = `<div style="text-align:center; color:var(--text-sub); margin-top:40px; font-size:0.95rem;">沒有找到相符的資料夾喔！</div>`;
+                    return;
+                }
+
+                // 2. 開始渲染每個資料夾
+                groupNames.forEach(name => {
+                    const groupItems = groups[name].reverse(); // 讓最新的照片在前面
+                    
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'folder-wrapper';
+                    
+                    // 資料夾頂部列
+                    const header = document.createElement('div');
+                    header.className = 'folder-header';
+                    header.onclick = function() { toggleFolder(this); };
+                    header.innerHTML = `<span>📁 ${name}</span> <span style="font-size:0.85rem; color:var(--text-sub); background:rgba(0,0,0,0.04); padding:2px 10px; border-radius:12px;">共 ${groupItems.length} 張</span>`;
+                    
+                    // 資料夾收納區
+                    const content = document.createElement('div');
+                    content.className = 'folder-content';
+                    
+                    groupItems.forEach(item => {
+                        const itemDiv = document.createElement('div');
+                        itemDiv.className = 'history-item';
+                        itemDiv.innerHTML = `
+                            <div class="delete-btn" onclick="event.stopPropagation(); deleteItem(${item.id}, '${item.name}')">✕</div>
+                            <img src="${item.image}">
+                            <span>ID: #${item.id}</span>
+                        `;
+                        content.appendChild(itemDiv);
+                    });
+
+                    wrapper.appendChild(header);
+                    wrapper.appendChild(content);
+                    container.appendChild(wrapper);
                 });
             };
         }
     </script>
 </body>
 </html>
-
