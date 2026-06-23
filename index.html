@@ -52,6 +52,20 @@
             box-shadow: 0 2px 10px rgba(0,0,0,0.02);
             font-size: 1.2rem;
             font-weight: bold;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* 🆕 版本更新小標籤樣式 */
+        .version-badge {
+            font-size: 0.75rem;
+            background: #e9ecef;
+            color: var(--text-sub);
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: normal;
         }
 
         .container {
@@ -68,7 +82,7 @@
             display: block;
         }
 
-        /* 核心功能按鈕 */
+        /* 核心功能按鈕區 */
         .zone-selection {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -77,26 +91,47 @@
             margin-bottom: 25px;
         }
 
+        /* 100% 成功喚醒相機設計：將原生 file input 變成隱形防護罩覆蓋整顆卡片 */
+        .zone-card-wrapper {
+            position: relative;
+            overflow: hidden;
+            border-radius: var(--border-radius);
+        }
+
         .zone-card {
             border-radius: var(--border-radius);
             padding: 30px 15px;
             text-align: center;
-            cursor: pointer;
-            transition: all 0.2s ease;
             box-shadow: 0 6px 16px rgba(0,0,0,0.02);
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 12px;
-        }
-
-        .zone-card:active {
-            transform: scale(0.96);
+            width: 100%;
+            height: 100%;
+            pointer-events: none; /* 讓點擊穿透到下面的真實 input */
         }
 
         .zone-scan { background: var(--scan-btn-bg); border: 3px dashed var(--scan-btn-border); color: #2e7d32; }
         .zone-add { background: var(--add-btn-bg); border: 3px dashed var(--add-btn-border); color: #1565c0; }
         .zone-card span { font-size: 1rem; font-weight: bold; }
+
+        /* 真實的隱形原生相機按鈕 */
+        .real-camera-input {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .zone-card-wrapper:active {
+            transform: scale(0.96);
+            transition: transform 0.1s ease;
+        }
 
         /* 預覽卡片 */
         .preview-card {
@@ -123,8 +158,6 @@
         input[type="text"] { flex: 1; padding: 12px 18px; border: 2px solid #e9ecef; border-radius: 30px; font-size: 0.95rem; outline: none; }
         input[type="text"]:focus { border-color: var(--primary); }
         button { background-color: var(--primary); color: var(--text-main); border: none; padding: 12px 24px; border-radius: 30px; font-weight: bold; cursor: pointer; }
-
-        #camera-input { display: none; }
 
         /* ================== 📦 智慧資料夾物品庫樣式 ================== */
         .search-box { background: white; padding: 14px; border-radius: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.02); margin-bottom: 20px; }
@@ -209,20 +242,32 @@
 </head>
 <body>
 
-    <header id="page-title">✨ 圖片記憶</header>
+    <!-- 🌟 標題加上版本號標籤 -->
+    <header>
+        <span id="page-title">✨ 圖片記憶</span>
+        <span class="version-badge">v1.2</span>
+    </header>
 
     <div class="container">
         
         <div id="tab-scan" class="tab-content active">
             <div class="zone-selection" id="zone-ui">
-                <div class="zone-card zone-scan" onclick="startAction('scan')">
-                    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                    <span>📸 辨識舊東西</span>
+                <!-- 辨識舊東西按鈕 -->
+                <div class="zone-card-wrapper">
+                    <input type="file" accept="image/*" capture="environment" class="real-camera-input" onchange="handlePhotoTrigger(this, 'scan')">
+                    <div class="zone-card zone-scan">
+                        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        <span>📸 辨識舊東西</span>
+                    </div>
                 </div>
                 
-                <div class="zone-card zone-add" onclick="startAction('add')">
-                    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                    <span>➕ 記憶新東西</span>
+                <!-- 記憶新東西按鈕 -->
+                <div class="zone-card-wrapper">
+                    <input type="file" accept="image/*" capture="environment" class="real-camera-input" onchange="handlePhotoTrigger(this, 'add')">
+                    <div class="zone-card zone-add">
+                        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        <span>➕ 記憶新東西</span>
+                    </div>
                 </div>
             </div>
 
@@ -244,8 +289,6 @@
                 
                 <button style="width:100%; margin-top:16px; background:#f1f3f5; color:var(--text-sub); border:none; padding:12px; border-radius:20px; font-weight:bold; cursor:pointer;" onclick="resetScan()">返回主選單</button>
             </div>
-
-            <input type="file" id="camera-input" accept="image/*" capture="environment">
         </div>
 
         <div id="tab-library" class="tab-content">
@@ -280,23 +323,16 @@
             updateTagPool();
         };
 
-        // 🌟 強效修正：採用最直接穩定的相機喚醒流程
-        function startAction(mode) {
+        // 真實點擊觸發機制：直接讀取點擊的那顆按鈕檔案
+        function handlePhotoTrigger(inputEl, mode) {
             currentMode = mode;
-            const fileInput = document.getElementById('camera-input');
-            fileInput.value = ""; // 清空舊值，確保每次點擊都觸發 change 事件
-            fileInput.click();
-        }
-
-        document.getElementById('camera-input').addEventListener('change', function(e) {
-            const file = e.target.files[0];
+            const file = inputEl.files[0];
             if (!file) return;
 
             const reader = new FileReader();
             reader.onload = function(event) {
                 const tempImg = new Image();
                 tempImg.onload = function() {
-                    // 🌟 穩定版等比例壓縮算法
                     const targetWidth = 600;
                     const scaleFactor = targetWidth / tempImg.width;
                     const canvas = document.createElement('canvas');
@@ -313,7 +349,6 @@
                     ctx.drawImage(tempImg, 0, 0, canvas.width, canvas.height);
                     currentBase64 = canvas.toDataURL('image/jpeg', 0.7);
                     
-                    // 計算哈希指紋並更新畫面
                     currentHash = calculateImageHash(tempImg);
                     
                     document.getElementById('zone-ui').style.display = 'none';
@@ -329,7 +364,7 @@
                 tempImg.src = event.target.result;
             };
             reader.readAsDataURL(file);
-        });
+        }
 
         function forceMatchImage(targetHash) {
             const transaction = db.transaction(["items"], "readonly");
@@ -365,7 +400,7 @@
                     resultBox.innerHTML = `🎯 幫你找到了！這應該是：<br><span style="font-size:1.4rem; color:#1b5e20;">【 ${bestMatch.name} 】</span><br><span style="font-size:0.8rem; font-weight:normal; color:var(--text-sub);">相似度：${finalScore}%</span>`;
                 } else {
                     resultBox.style.backgroundColor = 'var(--warning-bg)';
-                    resultBox.innerHTML = `⚠️ <span style="color:#b78103;">注意：找不到非常像的物品...</span><br>庫存中最接近的是：<span style="color:#b78103;">【 ${bestMatch.name} 】</span><br><span style="font-size:0.8rem; font-weight:normal; color:#b78103;">(相似度僅 ${finalScore}%，這極可能是全新物品，建議點右邊重新建立記憶！)</span>`;
+                    resultBox.innerHTML = `⚠️ <span style="color:#b78103;">注意：找不到非常像的物品...</span><br>庫存表中最接近的是：<span style="color:#b78103;">【 ${bestMatch.name} 】</span><br><span style="font-size:0.8rem; font-weight:normal; color:#b78103;">(相似度僅 ${finalScore}%，這極可能是全新物品，建議點右邊重新建立記憶！)</span>`;
                 }
             };
         }
@@ -417,9 +452,10 @@
         function resetScan() {
             document.getElementById('zone-ui').style.display = 'grid';
             document.getElementById('preview-card').style.display = 'none';
-            document.getElementById('camera-input').value = "";
+            document.querySelectorAll('.real-camera-input').forEach(input => input.value = "");
         }
 
+        /* 簡單實用的 8x8 灰階相似度指紋演算法 */
         function calculateImageHash(imgEl) {
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
